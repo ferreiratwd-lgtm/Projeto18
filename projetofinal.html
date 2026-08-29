@@ -3,1255 +3,1613 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>V15 — BARBER CONTROL PRO</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        barberDark: '#121214',
-                        barberCard: '#1a1a1e',
-                        barberBorder: '#2e2e38',
-                        barberGold: '#d4af37',
-                        barberGoldHover: '#b3922b',
-                    }
-                }
-            }
-        }
-    </script>
+    <title>BARBER PRO — Gestão Profissional</title>
     <style>
-        body { background-color: #121214; color: #e4e4e7; font-family: system-ui, -apple-system, sans-serif; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        /* Custom scrollbar */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #121214; }
-        ::-webkit-scrollbar-thumb { background: #2e2e38; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #d4af37; }
+        :root {
+            --bg-main: #121212;
+            --bg-card: #1e1e1e;
+            --bg-card-hover: #262626;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --accent-gold: #d4af37;
+            --accent-gold-hover: #e6c555;
+            --border-color: #333333;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --info: #17a2b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: var(--bg-card);
+            border-bottom: 2px solid var(--accent-gold);
+            padding: 16px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header h1 {
+            font-size: 1.4rem;
+            letter-spacing: 2px;
+            color: var(--accent-gold);
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        header p {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Navigation Tabs */
+        .nav-container {
+            background-color: var(--bg-card);
+            display: flex;
+            overflow-x: auto;
+            border-bottom: 1px solid var(--border-color);
+            scrollbar-width: none; /* Firefox */
+        }
+
+        .nav-container::-webkit-scrollbar {
+            display: none; /* Chrome/Safari */
+        }
+
+        .nav-tab {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            padding: 12px 16px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-bottom: 3px solid transparent;
+        }
+
+        .nav-tab:hover {
+            color: var(--text-primary);
+            background-color: rgba(255, 255, 255, 0.03);
+        }
+
+        .nav-tab.active {
+            color: var(--accent-gold);
+            border-bottom-color: var(--accent-gold);
+            background-color: rgba(212, 175, 55, 0.05);
+        }
+
+        /* Main Container */
+        main {
+            flex: 1;
+            padding: 16px;
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.2s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Cards & UI Elements */
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            color: var(--accent-gold);
+            margin-bottom: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .indicators-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .indicator-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .indicator-card .label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .indicator-card .value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .indicator-card .value.gold {
+            color: var(--accent-gold);
+        }
+
+        /* Forms & Inputs */
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px 12px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+        }
+
+        /* Buttons */
+        .btn {
+            background-color: var(--accent-gold);
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            padding: 12px 16px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover {
+            background-color: var(--accent-gold-hover);
+        }
+
+        .btn-secondary {
+            background-color: #333;
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background-color: #444;
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: #fff;
+        }
+
+        .btn-danger:hover {
+            background-color: #bd2130;
+        }
+
+        .btn-sm {
+            padding: 6px 10px;
+            font-size: 0.75rem;
+            width: auto;
+        }
+
+        /* Tables & Lists */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            margin-top: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+
+        th, td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: rgba(255, 255, 255, 0.03);
+            color: var(--accent-gold);
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Filters & Actions */
+        .filters-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .actions-group {
+            display: flex;
+            gap: 6px;
+        }
+
+        /* Modals & Notifications */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            padding: 16px;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            width: 100%;
+            max-width: 450px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            font-size: 1.1rem;
+            color: var(--accent-gold);
+            margin-bottom: 14px;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .alert-banner {
+            background-color: rgba(212, 175, 55, 0.1);
+            border-left: 4px solid var(--accent-gold);
+            padding: 12px;
+            margin-bottom: 16px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        .badge-success { background-color: rgba(40, 167, 69, 0.2); color: var(--success); }
+        .badge-danger { background-color: rgba(220, 53, 69, 0.2); color: var(--danger); }
+        .badge-gold { background-color: rgba(212, 175, 55, 0.2); color: var(--accent-gold); }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col antialiased selection:bg-barberGold selection:text-black">
+<body>
 
-    <!-- SYSTEM LOCK OVERLAY -->
-    <div id="lockScreen" class="fixed inset-0 z-50 bg-barberDark/95 backdrop-blur-md flex items-center justify-center hidden">
-        <div class="bg-barberCard border border-barberBorder p-8 rounded-2xl shadow-2xl max-w-md w-full mx-4 text-center">
-            <div class="w-16 h-16 bg-barberGold/10 text-barberGold rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
-                <i class="fa-solid fa-lock"></i>
-            </div>
-            <h2 class="text-2xl font-bold text-white mb-2">SISTEMA BLOQUEADO</h2>
-            <p class="text-zinc-400 text-sm mb-6">Digite sua senha administrativa para desbloquear o Barber Control Pro.</p>
-            <form id="unlockForm" onsubmit="unlockSystem(event)" class="space-y-4">
-                <input type="password" id="unlockPassword" required placeholder="Senha de acesso" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-barberGold text-center tracking-widest text-lg">
-                <button type="submit" class="w-full bg-barberGold text-black font-semibold py-3 rounded-lg hover:bg-barberGoldHover transition shadow-lg">DESBLOQUEAR</button>
-            </form>
-            <p id="unlockError" class="text-red-400 text-xs mt-3 hidden">Senha incorreta. Tente novamente.</p>
-        </div>
-    </div>
-
-    <!-- HEADER / TOPBAR -->
-    <header class="bg-barberCard border-b border-barberBorder sticky top-0 z-30 px-4 lg:px-8 py-3 flex items-center justify-between">
-        <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 bg-barberGold/20 text-barberGold rounded-lg flex items-center justify-center text-xl font-bold">
-                <i class="fa-solid fa-scissors"></i>
-            </div>
-            <div>
-                <h1 class="font-bold text-white tracking-wide text-base lg:text-lg flex items-center gap-2">
-                    BARBER CONTROL PRO <span class="text-xs bg-barberGold/20 text-barberGold px-2 py-0.5 rounded font-mono">V15</span>
-                </h1>
-                <p class="text-xs text-zinc-400">Barbearia Aristóteles — Gestão Profissional</p>
-            </div>
-        </div>
-
-        <div class="flex items-center space-x-2 lg:space-x-4">
-            <div id="systemStatusBadge" class="hidden sm:flex items-center space-x-2 bg-zinc-900 px-3 py-1.5 rounded-full border border-zinc-800 text-xs">
-                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" id="statusDot"></span>
-                <span id="statusText" class="text-zinc-300 font-medium">Sistema Operacional</span>
-            </div>
-            
-            <button onclick="openGlobalSearch()" title="Pesquisar (Global)" class="bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white p-2.5 rounded-lg border border-zinc-800 transition">
-                <i class="fa-solid fa-search"></i>
-            </button>
-            
-            <button onclick="toggleSystemLock()" title="Bloquear Sistema" class="bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-amber-400 p-2.5 rounded-lg border border-zinc-800 transition">
-                <i class="fa-solid fa-lock"></i>
-            </button>
-        </div>
+    <header>
+        <h1>Barber Pro</h1>
+        <p>Controle Profissional de Fichas</p>
     </header>
 
-    <!-- NAVIGATION TABS -->
-    <nav class="bg-barberCard/80 border-b border-barberBorder px-4 lg:px-8 overflow-x-auto no-scrollbar z-20">
-        <div class="flex space-x-1 lg:space-x-2 py-2 min-w-max">
-            <button onclick="switchTab('operacao')" id="btn-operacao" class="tab-btn px-4 py-2 rounded-lg font-medium text-sm transition flex items-center gap-2 bg-barberGold text-black">
-                <i class="fa-solid fa-scissors"></i> Operação
-            </button>
-            <button onclick="switchTab('financeiro')" id="btn-financeiro" class="tab-btn px-4 py-2 rounded-lg font-medium text-sm transition flex items-center gap-2 text-zinc-400 hover:text-white hover:bg-zinc-800">
-                <i class="fa-solid fa-wallet"></i> Financeiro
-            </button>
-            <button onclick="switchTab('fechamentos')" id="btn-fechamentos" class="tab-btn px-4 py-2 rounded-lg font-medium text-sm transition flex items-center gap-2 text-zinc-400 hover:text-white hover:bg-zinc-800">
-                <i class="fa-solid fa-calendar-check"></i> Fechamentos
-            </button>
-            <button onclick="switchTab('relatorios')" id="btn-relatorios" class="tab-btn px-4 py-2 rounded-lg font-medium text-sm transition flex items-center gap-2 text-zinc-400 hover:text-white hover:bg-zinc-800">
-                <i class="fa-solid fa-chart-line"></i> Relatórios
-            </button>
-            <button onclick="switchTab('admin')" id="btn-admin" class="tab-btn px-4 py-2 rounded-lg font-medium text-sm transition flex items-center gap-2 text-zinc-400 hover:text-white hover:bg-zinc-800">
-                <i class="fa-solid fa-gears"></i> Administração
-            </button>
-        </div>
-    </nav>
+    <div class="nav-container">
+        <button class="nav-tab active" onclick="switchTab('fichas')">✂️ Fichas</button>
+        <button class="nav-tab" onclick="switchTab('historico')">📋 Histórico</button>
+        <button class="nav-tab" onclick="switchTab('servicos')">⚙️ Serviços</button>
+        <button class="nav-tab" onclick="switchTab('analises')">📊 Análises</button>
+        <button class="nav-tab" onclick="switchTab('financeiro')">💰 Fechamento</button>
+        <button class="nav-tab" onclick="switchTab('backup')">💾 Backup</button>
+        <button class="nav-tab" onclick="switchTab('seguranca')">🔒 Segurança</button>
+        <button class="nav-tab" onclick="switchTab('auditoria')">📜 Auditoria</button>
+        <button class="nav-tab" onclick="switchTab('atualizacoes')">🚀 Versão</button>
+    </div>
 
-    <!-- MAIN CONTAINER -->
-    <main class="flex-1 p-4 lg:p-8 max-w-7xl mx-auto w-full">
-
-        <!-- ==================== ABA 1: OPERAÇÃO ==================== -->
-        <div id="tab-operacao" class="tab-content active space-y-6">
-            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-barberCard p-6 rounded-2xl border border-barberBorder">
-                <div>
-                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-file-invoice text-barberGold"></i> Gestão de Fichas & Lançamentos
-                    </h2>
-                    <p class="text-xs text-zinc-400 mt-1">Registre atendimentos, gerencie serviços e acompanhe o histórico detalhado.</p>
+    <main>
+        <!-- 1. FICHAS -->
+        <section id="tab-fichas" class="tab-content active">
+            <div class="indicators-grid">
+                <div class="indicator-card">
+                    <div class="label">Atendimentos Hoje</div>
+                    <div class="value" id="ind-atendimentos">0</div>
                 </div>
-                <button onclick="openNewTicketModal()" class="bg-barberGold hover:bg-barberGoldHover text-black font-semibold px-5 py-2.5 rounded-xl transition flex items-center gap-2 shadow-lg">
-                    <i class="fa-solid fa-plus"></i> Nova Ficha
-                </button>
+                <div class="indicator-card">
+                    <div class="label">Total em Fichas</div>
+                    <div class="value" id="ind-total-fichas">R$ 0,00</div>
+                </div>
+                <div class="indicator-card">
+                    <div class="label">Seu 60% Hoje</div>
+                    <div class="value gold" id="ind-comissao">R$ 0,00</div>
+                </div>
+                <div class="indicator-card">
+                    <div class="label">Gorjetas Hoje</div>
+                    <div class="value" id="ind-gorjetas">R$ 0,00</div>
+                </div>
             </div>
 
-            <!-- Subnav Operação -->
-            <div class="flex border-b border-zinc-800 space-x-6 text-sm">
-                <button onclick="switchOpSub('fichas')" id="btn-op-fichas" class="pb-3 border-b-2 border-barberGold text-white font-medium">Fichas Ativas</button>
-                <button onclick="switchOpSub('servicos')" id="btn-op-servicos" class="pb-3 border-b-2 border-transparent text-zinc-400 hover:text-white font-medium">Serviços & Preços</button>
+            <div class="indicator-card" style="margin-bottom: 16px; border-color: var(--accent-gold);">
+                <div class="label">Total Previsto para Você Hoje (60% + Gorjetas)</div>
+                <div class="value gold" id="ind-total-previsto" style="font-size: 1.5rem;">R$ 0,00</div>
             </div>
 
-            <!-- Subtab Fichas -->
-            <div id="op-sub-fichas" class="space-y-4">
-                <div class="flex flex-col sm:flex-row gap-3 justify-between items-center bg-barberCard p-4 rounded-xl border border-barberBorder">
-                    <div class="relative w-full sm:w-80">
-                        <i class="fa-solid fa-search absolute left-3 top-3 text-zinc-500 text-sm"></i>
-                        <input type="text" id="filterTicketText" oninput="renderTickets()" placeholder="Pesquisar por ID, serviço..." class="w-full bg-zinc-900 border border-zinc-700 rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-barberGold">
+            <div class="card">
+                <div class="card-title">Registrar Novo Atendimento</div>
+                <form id="form-ficha" onsubmit="handleFichaSubmit(event)">
+                    <div class="form-group">
+                        <label>Data</label>
+                        <input type="date" id="ficha-data" required>
                     </div>
-                    <div class="flex items-center gap-3 w-full sm:w-auto">
-                        <select id="filterTicketStatus" onchange="renderTickets()" class="bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-barberGold">
-                            <option value="todos">Todos os Status</option>
-                            <option value="Confirmada">Confirmadas</option>
-                            <option value="Rascunho">Rascunhos</option>
-                            <option value="Fechada">Fechadas</option>
+                    <div class="form-group">
+                        <label>Hora</label>
+                        <input type="time" id="ficha-hora" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Serviço</label>
+                        <select id="ficha-servico" onchange="handleServiceChange()" required>
+                            <!-- Serviços injetados via JS -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Valor da Ficha (R$)</label>
+                        <input type="number" step="0.01" id="ficha-valor" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Gorjeta (Opcional - R$)</label>
+                        <input type="number" step="0.01" id="ficha-gorjeta" value="0.00">
+                    </div>
+                    <button type="submit" class="btn">Adicionar Ficha</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- 2. HISTÓRICO -->
+        <section id="tab-historico" class="tab-content">
+            <div class="card">
+                <div class="card-title">Histórico de Atendimentos</div>
+                <div class="filters-row">
+                    <div class="form-group" style="margin-bottom: 8px;">
+                        <label>Mês</label>
+                        <input type="month" id="filtro-mes" onchange="renderHistorico()">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 8px;">
+                        <label>Serviço</label>
+                        <select id="filtro-servico" onchange="renderHistorico()">
+                            <option value="">Todos os serviços</option>
                         </select>
                     </div>
                 </div>
-
-                <div class="bg-barberCard rounded-2xl border border-barberBorder overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-zinc-900/60 border-b border-barberBorder text-xs uppercase tracking-wider text-zinc-400">
-                                    <th class="p-4">ID / Data</th>
-                                    <th class="p-4">Serviço</th>
-                                    <th class="p-4">Valor</th>
-                                    <th class="p-4">Gorjeta</th>
-                                    <th class="p-4">Período</th>
-                                    <th class="p-4">Status</th>
-                                    <th class="p-4 text-right">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="ticketsTableBody" class="divide-y divide-zinc-800 text-sm">
-                                <!-- Preenchido via JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Subtab Serviços -->
-            <div id="op-sub-servicos" class="space-y-4 hidden">
-                <div class="flex justify-between items-center bg-barberCard p-4 rounded-xl border border-barberBorder">
-                    <h3 class="font-semibold text-white">Tabela de Serviços e Histórico de Preços</h3>
-                    <button onclick="openNewServiceModal()" class="bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2 rounded-lg text-sm font-medium border border-zinc-700 transition">
-                        <i class="fa-solid fa-plus mr-2"></i> Adicionar Serviço
-                    </button>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="servicesGrid">
-                    <!-- Preenchido via JS -->
-                </div>
-            </div>
-        </div>
-
-        <!-- ==================== ABA 2: FINANCEIRO ==================== -->
-        <div id="tab-financeiro" class="tab-content space-y-6">
-            <div class="bg-barberCard p-6 rounded-2xl border border-barberBorder flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-                <div>
-                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-wallet text-barberGold"></i> Painel Financeiro & Reconciliação
-                    </h2>
-                    <p class="text-xs text-zinc-400 mt-1">Controle de produção, comissões (60%), gorjetas, recebimentos e auditoria de divergências.</p>
-                </div>
-                <button onclick="runReconciliation()" class="bg-barberGold hover:bg-barberGoldHover text-black font-semibold px-5 py-2.5 rounded-xl transition flex items-center gap-2 shadow-lg">
-                    <i class="fa-solid fa-scale-balanced"></i> Executar Reconciliação
-                </button>
-            </div>
-
-            <!-- Cards Resumo Financeiro -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="bg-barberCard p-5 rounded-2xl border border-barberBorder">
-                    <p class="text-xs text-zinc-400 uppercase font-semibold">Produção Total</p>
-                    <h3 class="text-2xl font-bold text-white mt-1" id="finProducao">R$ 0,00</h3>
-                    <span class="text-xs text-zinc-500 mt-2 block">Soma de todas as fichas</span>
-                </div>
-                <div class="bg-barberCard p-5 rounded-2xl border border-barberBorder">
-                    <p class="text-xs text-zinc-400 uppercase font-semibold">Seu Valor (60%)</p>
-                    <h3 class="text-2xl font-bold text-barberGold mt-1" id="finComissao">R$ 0,00</h3>
-                    <span class="text-xs text-zinc-500 mt-2 block">Comissão padrão aplicável</span>
-                </div>
-                <div class="bg-barberCard p-5 rounded-2xl border border-barberBorder">
-                    <p class="text-xs text-zinc-400 uppercase font-semibold">Gorjetas</p>
-                    <h3 class="text-2xl font-bold text-emerald-400 mt-1" id="finGorjetas">R$ 0,00</h3>
-                    <span class="text-xs text-zinc-500 mt-2 block">Total acumulado de gorjetas</span>
-                </div>
-                <div class="bg-barberCard p-5 rounded-2xl border border-barberBorder">
-                    <p class="text-xs text-zinc-400 uppercase font-semibold">Total Devido</p>
-                    <h3 class="text-2xl font-bold text-white mt-1" id="finDevido">R$ 0,00</h3>
-                    <span class="text-xs text-zinc-500 mt-2 block">60% + Gorjetas</span>
-                </div>
-            </div>
-
-            <!-- Box de Reconciliação -->
-            <div id="reconciliationBox" class="bg-barberCard p-6 rounded-2xl border border-barberBorder space-y-4">
-                <div class="flex items-center justify-between border-b border-zinc-800 pb-4">
-                    <h3 class="font-bold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-shield-halved text-barberGold"></i> Status de Reconciliação
-                    </h3>
-                    <span id="reconStatusBadge" class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">🟢 VALORES CONCILIADOS</span>
-                </div>
-                <div id="reconDetails" class="text-sm text-zinc-300 space-y-2">
-                    <p>Nenhuma divergência detectada entre os registros de produção, comissões e recebimentos atuais.</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- ==================== ABA 3: FECHAMENTOS ==================== -->
-        <div id="tab-fechamentos" class="tab-content space-y-6">
-            <div class="bg-barberCard p-6 rounded-2xl border border-barberBorder flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-                <div>
-                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-calendar-check text-barberGold"></i> Fechamentos de Período (Semanas & Meses)
-                    </h2>
-                    <p class="text-xs text-zinc-400 mt-1">Conferência rigorosa, bloqueio de segurança e reabertura controlada por motivo.</p>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Semanas -->
-                <div class="bg-barberCard p-6 rounded-2xl border border-barberBorder space-y-4">
-                    <div class="flex justify-between items-center">
-                        <h3 class="font-bold text-white flex items-center gap-2">
-                            <i class="fa-solid fa-calendar-week text-barberGold"></i> Fechamento Semanal
-                        </h3>
-                        <span id="currentWeekStatus" class="text-xs px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 font-medium">Aberta</span>
-                    </div>
-                    <div id="weekDetailsContainer" class="space-y-3 text-sm text-zinc-300 bg-zinc-900/50 p-4 rounded-xl border border-zinc-800">
-                        <!-- Preenchido via JS -->
-                    </div>
-                    <div class="flex gap-3 pt-2">
-                        <button onclick="openConferenciaModal('semana')" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-medium py-2.5 rounded-xl border border-zinc-700 transition text-sm">
-                            <i class="fa-solid fa-list-check mr-2"></i> Conferir Semana
-                        </button>
-                        <button onclick="openReopenModal('semana')" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 font-medium px-4 py-2.5 rounded-xl border border-red-500/20 transition text-sm">
-                            <i class="fa-solid fa-unlock mr-2"></i> Reabrir
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Meses -->
-                <div class="bg-barberCard p-6 rounded-2xl border border-barberBorder space-y-4">
-                    <div class="flex justify-between items-center">
-                        <h3 class="font-bold text-white flex items-center gap-2">
-                            <i class="fa-solid fa-calendar-days text-barberGold"></i> Fechamento Mensal
-                        </h3>
-                        <span id="currentMonthStatus" class="text-xs px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 font-medium">Aberto</span>
-                    </div>
-                    <div id="monthDetailsContainer" class="space-y-3 text-sm text-zinc-300 bg-zinc-900/50 p-4 rounded-xl border border-zinc-800">
-                        <!-- Preenchido via JS -->
-                    </div>
-                    <div class="flex gap-3 pt-2">
-                        <button onclick="openConferenciaModal('mes')" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-medium py-2.5 rounded-xl border border-zinc-700 transition text-sm">
-                            <i class="fa-solid fa-list-check mr-2"></i> Conferir Mês
-                        </button>
-                        <button onclick="openReopenModal('mes')" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 font-medium px-4 py-2.5 rounded-xl border border-red-500/20 transition text-sm">
-                            <i class="fa-solid fa-unlock mr-2"></i> Reabrir
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ==================== ABA 4: RELATÓRIOS ==================== -->
-        <div id="tab-relatorios" class="tab-content space-y-6">
-            <div class="bg-barberCard p-6 rounded-2xl border border-barberBorder flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-                <div>
-                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-chart-line text-barberGold"></i> Relatórios & Comparativos
-                    </h2>
-                    <p class="text-xs text-zinc-400 mt-1">Análise de produção, serviços mais realizados e comparativos entre períodos.</p>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Relatório por Serviço -->
-                <div class="bg-barberCard p-6 rounded-2xl border border-barberBorder space-y-4">
-                    <h3 class="font-bold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-scissors text-barberGold"></i> Atendimentos por Serviço
-                    </h3>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm">
-                            <thead>
-                                <tr class="border-b border-zinc-800 text-zinc-400 text-xs uppercase">
-                                    <th class="py-3">Serviço</th>
-                                    <th class="py-3 text-center">Qtd</th>
-                                    <th class="py-3 text-right">Produção</th>
-                                </tr>
-                            </thead>
-                            <tbody id="reportServicesTable" class="divide-y divide-zinc-800">
-                                <!-- Preenchido via JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Comparador Universal -->
-                <div class="bg-barberCard p-6 rounded-2xl border border-barberBorder space-y-4">
-                    <h3 class="font-bold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-right-left text-barberGold"></i> Comparador Universal
-                    </h3>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="text-xs text-zinc-400 block mb-1">Período A</label>
-                            <select id="compPeriodA" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-sm text-white">
-                                <option value="atual">Mês Atual</option>
-                                <option value="anterior">Mês Anterior</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="text-xs text-zinc-400 block mb-1">Período B</label>
-                            <select id="compPeriodB" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-sm text-white">
-                                <option value="anterior">Mês Anterior</option>
-                                <option value="atual">Mês Atual</option>
-                            </select>
-                        </div>
-                    </div>
-                    <button onclick="runUniversalComparison()" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-medium py-2.5 rounded-xl border border-zinc-700 transition text-sm">
-                        Comparar Períodos
-                    </button>
-                    <div id="comparisonResult" class="text-xs text-zinc-300 bg-zinc-900/50 p-4 rounded-xl border border-zinc-800">
-                        Selecione os períodos e clique em comparar.
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ==================== ABA 5: ADMINISTRAÇÃO ==================== -->
-        <div id="tab-admin" class="tab-content space-y-6">
-            <div class="bg-barberCard p-6 rounded-2xl border border-barberBorder flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-                <div>
-                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-gears text-barberGold"></i> Administração & Segurança
-                    </h2>
-                    <p class="text-xs text-zinc-400 mt-1">Auditoria, diagnósticos, backup, lixeira e configurações do sistema.</p>
-                </div>
-            </div>
-
-            <!-- Grid de Módulos Administrativos -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Segurança & Senha -->
-                <div class="bg-barberCard p-6 rounded-2xl border border-barberBorder space-y-4">
-                    <h3 class="font-bold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-key text-barberGold"></i> Segurança & Senha
-                    </h3>
-                    <form onsubmit="changePassword(event)" class="space-y-3">
-                        <input type="password" id="currentPassword" required placeholder="Senha atual" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-sm text-white">
-                        <input type="password" id="newPassword" required placeholder="Nova senha" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-sm text-white">
-                        <button type="submit" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-medium py-2 rounded-lg border border-zinc-700 text-sm transition">Alterar Senha</button>
-                    </form>
-                </div>
-
-                <!-- Diagnóstico & Integridade -->
-                <div class="bg-barberCard p-6 rounded-2xl border border-barberBorder space-y-4">
-                    <h3 class="font-bold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-stethoscope text-barberGold"></i> Diagnóstico & Integridade
-                    </h3>
-                    <div id="diagResult" class="text-xs text-zinc-300 bg-zinc-900/50 p-3 rounded-lg border border-zinc-800">
-                        🟢 Sistema íntegro e verificado.
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="runDiagnostics()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-medium py-2 rounded-lg border border-zinc-700 text-sm transition">Verificar</button>
-                        <button onclick="recalculateData()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-medium py-2 rounded-lg border border-zinc-700 text-sm transition">Recalcular</button>
-                    </div>
-                </div>
-
-                <!-- Backup Profissional -->
-                <div class="bg-barberCard p-6 rounded-2xl border border-barberBorder space-y-4">
-                    <h3 class="font-bold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-database text-barberGold"></i> Backup & Recuperação
-                    </h3>
-                    <p class="text-xs text-zinc-400">Exporte ou importe todos os dados do sistema com segurança.</p>
-                    <div class="flex gap-2 pt-2">
-                        <button onclick="exportBackup()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-medium py-2.5 rounded-lg border border-zinc-700 text-sm transition">Exportar Backup</button>
-                        <label class="flex-1 bg-barberGold hover:bg-barberGoldHover text-black font-semibold py-2.5 rounded-lg text-center cursor-pointer transition text-sm">
-                            Importar <input type="file" onchange="importBackup(event)" class="hidden" accept=".json">
-                        </label>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Central de Pendências -->
-            <div class="bg-barberCard p-6 rounded-2xl border border-barberBorder space-y-4">
-                <h3 class="font-bold text-white flex items-center gap-2">
-                    <i class="fa-solid fa-triangle-exclamation text-barberGold"></i> Central de Pendências
-                </h3>
-                <div id="pendenciasContainer" class="text-sm text-zinc-300 bg-zinc-900/50 p-4 rounded-xl border border-zinc-800">
-                    🟢 Nenhuma pendência encontrada.
-                </div>
-            </div>
-
-            <!-- Lixeira Profissional -->
-            <div class="bg-barberCard p-6 rounded-2xl border border-barberBorder space-y-4">
-                <div class="flex justify-between items-center">
-                    <h3 class="font-bold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-trash-can text-red-400"></i> Lixeira Profissional
-                    </h3>
-                    <span id="trashCount" class="text-xs bg-zinc-800 px-2.5 py-1 rounded-full text-zinc-400">0 itens</span>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm">
+                <div class="table-responsive">
+                    <table id="tabela-historico">
                         <thead>
-                            <tr class="border-b border-zinc-800 text-zinc-400 text-xs uppercase">
-                                <th class="py-3">ID / Registro</th>
-                                <th class="py-3">Data Exclusão</th>
-                                <th class="py-3 text-right">Ações</th>
+                            <tr>
+                                <th>Data/Hora</th>
+                                <th>Serviço</th>
+                                <th>Valor</th>
+                                <th>60%</th>
+                                <th>40%</th>
+                                <th>Gorjeta</th>
+                                <th>Ações</th>
                             </tr>
                         </thead>
-                        <tbody id="trashTableBody" class="divide-y divide-zinc-800">
-                            <!-- Preenchido via JS -->
+                        <tbody>
+                            <!-- Injetado via JS -->
                         </tbody>
                     </table>
                 </div>
             </div>
+        </section>
 
-            <!-- Auditoria Avançada -->
-            <div class="bg-barberCard p-6 rounded-2xl border border-barberBorder space-y-4">
-                <div class="flex justify-between items-center">
-                    <h3 class="font-bold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-shield-cat text-barberGold"></i> Auditoria Avançada
-                    </h3>
-                    <button onclick="clearAuditLog()" class="text-xs text-red-400 hover:text-red-300">Limpar Log</button>
-                </div>
-                <div class="overflow-x-auto max-h-80">
-                    <table class="w-full text-left text-sm">
+        <!-- 3. SERVIÇOS -->
+        <section id="tab-servicos" class="tab-content">
+            <div class="card">
+                <div class="card-title">Adicionar Novo Serviço</div>
+                <form id="form-servico" onsubmit="handleServicoSubmit(event)">
+                    <div class="form-group">
+                        <label>Nome do Serviço</label>
+                        <input type="text" id="servico-nome" placeholder="Ex: Corte Degradê" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Preço Padrão (R$)</label>
+                        <input type="number" step="0.01" id="servico-preco" placeholder="35.00" required>
+                    </div>
+                    <button type="submit" class="btn">Cadastrar Serviço</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Serviços Cadastrados</div>
+                <div class="table-responsive">
+                    <table id="tabela-servicos">
                         <thead>
-                            <tr class="border-b border-zinc-800 text-zinc-400 text-xs uppercase sticky top-0 bg-barberCard">
-                                <th class="py-3">Data / Hora</th>
-                                <th class="py-3">Ação</th>
-                                <th class="py-3">Detalhes</th>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Preço</th>
+                                <th>Status</th>
+                                <th>Ações</th>
                             </tr>
                         </thead>
-                        <tbody id="auditTableBody" class="divide-y divide-zinc-800 font-mono text-xs">
-                            <!-- Preenchido via JS -->
+                        <tbody>
+                            <!-- Injetado via JS -->
                         </tbody>
                     </table>
                 </div>
             </div>
-        </div>
+        </section>
 
+        <!-- 4. ANÁLISES -->
+        <section id="tab-analises" class="tab-content">
+            <div class="card">
+                <div class="card-title">Análise Financeira por Mês</div>
+                <div class="form-group">
+                    <label>Selecionar Mês</label>
+                    <input type="month" id="analise-mes" onchange="renderAnalises()">
+                </div>
+            </div>
+
+            <div class="indicators-grid">
+                <div class="indicator-card">
+                    <div class="label">Atendimentos</div>
+                    <div class="value" id="ana-atendimentos">0</div>
+                </div>
+                <div class="indicator-card">
+                    <div class="label">Faturamento Fichas</div>
+                    <div class="value" id="ana-total-fichas">R$ 0,00</div>
+                </div>
+                <div class="indicator-card">
+                    <div class="label">Sua Comissão (60%)</div>
+                    <div class="value gold" id="ana-comissao">R$ 0,00</div>
+                </div>
+                <div class="indicator-card">
+                    <div class="label">Gorjetas</div>
+                    <div class="value" id="ana-gorjetas">R$ 0,00</div>
+                </div>
+                <div class="indicator-card">
+                    <div class="label">Total Previsto</div>
+                    <div class="value gold" id="ana-total-previsto">R$ 0,00</div>
+                </div>
+                <div class="indicator-card">
+                    <div class="label">Ticket Médio</div>
+                    <div class="value" id="ana-ticket-medio">R$ 0,00</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Destaques do Mês</div>
+                <div style="font-size: 0.9rem; line-height: 1.6;" id="analises-destaques">
+                    <!-- Injetado via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. FECHAMENTO E FINANCEIRO -->
+        <section id="tab-financeiro" class="tab-content">
+            <div class="card">
+                <div class="card-title">Fechamento Semanal (Seg a Sáb)</div>
+                <div class="form-group">
+                    <label>Semana Referência (Segunda-feira)</label>
+                    <input type="date" id="fechamento-semana-data" onchange="renderFechamentoSemanal()">
+                </div>
+                <div id="resultado-fechamento-semana">
+                    <!-- Injetado via JS -->
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Fechamento Mensal</div>
+                <div class="form-group">
+                    <label>Mês de Referência</label>
+                    <input type="month" id="fechamento-mes-data" onchange="renderFechamentoMensal()">
+                </div>
+                <div id="resultado-fechamento-mes">
+                    <!-- Injetado via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. BACKUP -->
+        <section id="tab-backup" class="tab-content">
+            <div class="card">
+                <div class="card-title">Central de Backup</div>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 14px;">
+                    Exporte todos os seus dados, registros de fichas, serviços e auditoria em um arquivo seguro formato JSON.
+                </p>
+                <button class="btn" onclick="exportBackup()">Baixar Backup Completo (.json)</button>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Restaurar Backup</div>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 14px;">
+                    Selecione um arquivo de backup exportado anteriormente pelo Barber Pro. Um snapshot de segurança será criado automaticamente antes da restauração.
+                </p>
+                <div class="form-group">
+                    <input type="file" id="input-restore-file" accept=".json" onchange="importBackup(event)">
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Snapshots Automáticos Internos</div>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 12px;">
+                    O sistema cria pontos de restauração automaticamente antes de operações críticas.
+                </p>
+                <div class="table-responsive">
+                    <table id="tabela-snapshots">
+                        <thead>
+                            <tr>
+                                <th>Data/Hora</th>
+                                <th>Descrição / Evento</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Injetado via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. SEGURANÇA -->
+        <section id="tab-seguranca" class="tab-content">
+            <div class="card">
+                <div class="card-title">Status de Segurança e Integridade</div>
+                <div style="font-size: 0.85rem; line-height: 1.6;" id="status-seguranca-info">
+                    <!-- Injetado via JS -->
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Configurar PIN de Proteção Crítica</div>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 12px;">
+                    O PIN é solicitado apenas para operações altamente destrutivas ou críticas (restaurar backup, limpar dados, etc.).
+                </p>
+                <div class="form-group">
+                    <label>Definir PIN (4 dígitos numéricos)</label>
+                    <input type="password" id="input-novo-pin" maxlength="4" placeholder="Deixe em branco para sem PIN">
+                </div>
+                <button class="btn btn-secondary" onclick="salvarPin()">Salvar PIN</button>
+            </div>
+        </section>
+
+        <!-- 8. AUDITORIA -->
+        <section id="tab-auditoria" class="tab-content">
+            <div class="card">
+                <div class="card-title">Log de Auditoria de Ações</div>
+                <div class="table-responsive">
+                    <table id="tabela-auditoria">
+                        <thead>
+                            <tr>
+                                <th>Data/Hora</th>
+                                <th>Ação</th>
+                                <th>Descrição</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Injetado via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. ATUALIZAÇÕES -->
+        <section id="tab-atualizacoes" class="tab-content">
+            <div class="card">
+                <div class="card-title">Barber Pro v1.0 <span class="badge badge-gold">Atual</span></div>
+                <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px;">Data de Lançamento: 29/08/2026</p>
+                <ul style="font-size: 0.85rem; line-height: 1.6; padding-left: 18px; color: var(--text-secondary);">
+                    <li>Novo sistema desenvolvido do zero.</li>
+                    <li>Camada de armazenamento robusta com migração automática de dados legados do sistema antigo.</li>
+                    <li>Proteção integral de dados: zero exclusão silenciosa.</li>
+                    <li>Central de Backup completa e restauração segura.</li>
+                    <li>Snapshots internos automáticos antes de operações críticas.</li>
+                    <li>Controle de fichas com cálculo automático de comissão (60/40) e gorjetas.</li>
+                    <li>Histórico avançado com filtros flexíveis.</li>
+                    <li>Gerenciamento de serviços com preservação histórica.</li>
+                    <li>Análises financeiras detalhadas por mês.</li>
+                    <li>Fechamentos semanais (Segunda a Sábado) e mensais.</li>
+                    <li>Auditoria completa de ações e PIN opcional de segurança.</li>
+                    <li>Interface totalmente responsiva otimizada para celulares Android e iOS.</li>
+                </ul>
+            </div>
+        </section>
     </main>
 
-    <!-- MODAL: NOVA / EDITAR FICHA -->
-    <div id="ticketModal" class="fixed inset-0 z-50 bg-barberDark/80 backdrop-blur-sm flex items-center justify-center hidden p-4">
-        <div class="bg-barberCard border border-barberBorder p-6 rounded-2xl shadow-2xl max-w-lg w-full space-y-4">
-            <h3 id="modalTicketTitle" class="text-lg font-bold text-white">Nova Ficha de Atendimento</h3>
-            <form id="ticketForm" onsubmit="saveTicket(event)" class="space-y-4">
-                <input type="hidden" id="ticketEditId">
-                <div>
-                    <label class="text-xs text-zinc-400 block mb-1">Serviço</label>
-                    <select id="ticketService" onchange="updateTicketPrice()" required class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-barberGold">
-                        <!-- Preenchido via JS -->
-                    </select>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="text-xs text-zinc-400 block mb-1">Valor (R$)</label>
-                        <input type="number" step="0.01" id="ticketValue" required class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-barberGold">
-                    </div>
-                    <div>
-                        <label class="text-xs text-zinc-400 block mb-1">Gorjeta (R$)</label>
-                        <input type="number" step="0.01" id="ticketTip" value="0.00" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-barberGold">
-                    </div>
-                </div>
-                <div>
-                    <label class="text-xs text-zinc-400 block mb-1">Status</label>
-                    <select id="ticketStatus" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-barberGold">
-                        <option value="Confirmada">Confirmada</option>
-                        <option value="Rascunho">Rascunho</option>
-                    </select>
-                </div>
-                <div class="flex gap-3 pt-2">
-                    <button type="button" onclick="closeTicketModal()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white py-2.5 rounded-xl font-medium text-sm transition">Cancelar</button>
-                    <button type="submit" class="flex-1 bg-barberGold hover:bg-barberGoldHover text-black py-2.5 rounded-xl font-semibold text-sm transition shadow-lg">Salvar Ficha</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL: HISTÓRICO DA FICHA -->
-    <div id="historyModal" class="fixed inset-0 z-50 bg-barberDark/80 backdrop-blur-sm flex items-center justify-center hidden p-4">
-        <div class="bg-barberCard border border-barberBorder p-6 rounded-2xl shadow-2xl max-w-lg w-full space-y-4">
-            <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                <i class="fa-solid fa-clock-rotate-left text-barberGold"></i> Histórico da Ficha
-            </h3>
-            <div id="ticketHistoryContent" class="space-y-3 max-h-60 overflow-y-auto text-xs font-mono text-zinc-300 bg-zinc-900/50 p-4 rounded-xl border border-zinc-800">
-                <!-- Preenchido via JS -->
+    <!-- Modal Genérico / Confirmação / Edição -->
+    <div class="modal-overlay" id="modal-generico">
+        <div class="modal">
+            <div class="modal-header">
+                <span id="modal-titulo">Editar Registro</span>
+                <button class="close-modal" onclick="fecharModal()">&times;</button>
             </div>
-            <button onclick="closeHistoryModal()" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-2.5 rounded-xl font-medium text-sm transition">Fechar</button>
-        </div>
-    </div>
-
-    <!-- MODAL: CONFERÊNCIA -->
-    <div id="conferenciaModal" class="fixed inset-0 z-50 bg-barberDark/80 backdrop-blur-sm flex items-center justify-center hidden p-4">
-        <div class="bg-barberCard border border-barberBorder p-6 rounded-2xl shadow-2xl max-w-md w-full space-y-4">
-            <h3 id="confModalTitle" class="text-lg font-bold text-white">Conferência Obrigatória</h3>
-            <div class="space-y-2 text-sm text-zinc-300">
-                <label class="flex items-center gap-2"><input type="checkbox" class="conf-check accent-barberGold"> Fichas válidas e conferidas</label>
-                <label class="flex items-center gap-2"><input type="checkbox" class="conf-check accent-barberGold"> Valores preenchidos corretamente</label>
-                <label class="flex items-center gap-2"><input type="checkbox" class="conf-check accent-barberGold"> Nenhuma duplicidade encontrada</label>
-                <label class="flex items-center gap-2"><input type="checkbox" class="conf-check accent-barberGold"> Gorjetas e recebimentos conferidos</label>
-                <label class="flex items-center gap-2"><input type="checkbox" class="conf-check accent-barberGold"> Backup de segurança criado</label>
-            </div>
-            <div class="flex gap-3 pt-2">
-                <button onclick="closeConferenciaModal()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white py-2.5 rounded-xl text-sm font-medium">Cancelar</button>
-                <button onclick="executePeriodClosing()" class="flex-1 bg-barberGold hover:bg-barberGoldHover text-black py-2.5 rounded-xl text-sm font-semibold">Confirmar Fechamento</button>
+            <div id="modal-corpo">
+                <!-- Conteúdo dinâmico do modal -->
             </div>
         </div>
     </div>
 
-    <!-- MODAL: REABERTURA COM MOTIVO -->
-    <div id="reopenModal" class="fixed inset-0 z-50 bg-barberDark/80 backdrop-blur-sm flex items-center justify-center hidden p-4">
-        <div class="bg-barberCard border border-barberBorder p-6 rounded-2xl shadow-2xl max-w-md w-full space-y-4">
-            <h3 id="reopenModalTitle" class="text-lg font-bold text-white">Reabertura Controlada</h3>
-            <form onsubmit="executeReopen(event)" class="space-y-4">
-                <input type="hidden" id="reopenType">
-                <div>
-                    <label class="text-xs text-zinc-400 block mb-1">Senha Administrativa</label>
-                    <input type="password" id="reopenPassword" required class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-sm text-white">
-                </div>
-                <div>
-                    <label class="text-xs text-zinc-400 block mb-1">Motivo obrigatório</label>
-                    <textarea id="reopenReason" required placeholder="Ex: Corrigir ficha #000184" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-sm text-white h-20 resize-none"></textarea>
-                </div>
-                <div class="flex gap-3">
-                    <button type="button" onclick="closeReopenModal()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white py-2.5 rounded-xl text-sm font-medium">Cancelar</button>
-                    <button type="submit" class="flex-1 bg-red-600 hover:bg-red-500 text-white py-2.5 rounded-xl text-sm font-semibold">Reabrir Período</button>
-                </div>
-            </form>
+    <!-- Modal PIN -->
+    <div class="modal-overlay" id="modal-pin">
+        <div class="modal">
+            <div class="modal-header">
+                <span>Confirmação de Segurança (PIN)</span>
+                <button class="close-modal" onclick="fecharModalPin()">&times;</button>
+            </div>
+            <p style="font-size: 0.85rem; margin-bottom: 12px; color: var(--text-secondary);">Esta é uma operação crítica. Insira seu PIN para prosseguir:</p>
+            <div class="form-group">
+                <input type="password" id="input-pin-confirmacao" maxlength="4" placeholder="PIN de 4 dígitos">
+            </div>
+            <button class="btn" onclick="executarAcaoProtegida()">Confirmar</button>
         </div>
     </div>
 
-    <!-- MODAL: BUSCA GLOBAL -->
-    <div id="globalSearchModal" class="fixed inset-0 z-50 bg-barberDark/80 backdrop-blur-sm flex items-start justify-center pt-20 hidden p-4">
-        <div class="bg-barberCard border border-barberBorder p-6 rounded-2xl shadow-2xl max-w-2xl w-full space-y-4">
-            <div class="flex justify-between items-center">
-                <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                    <i class="fa-solid fa-search text-barberGold"></i> Busca Universal
-                </h3>
-                <button onclick="closeGlobalSearch()" class="text-zinc-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <input type="text" id="globalSearchInput" oninput="runGlobalSearch()" placeholder="Pesquise por ID (#184), serviço, data, valor..." class="w-full bg-zinc-900 border border-zinc-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-barberGold">
-            <div id="globalSearchResults" class="space-y-2 max-h-90 overflow-y-auto text-sm">
-                <p class="text-zinc-500 text-center py-4">Digite para buscar em fichas, serviços e auditoria...</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- JAVASCRIPT LOGIC -->
     <script>
-        // --- ESTADO INICIAL & DADOS ---
-        let db = {
-            adminPassword: '1234',
-            locked: false,
-            weekStatus: 'Aberta', // Aberta, Conferência, Fechada
-            monthStatus: 'Aberto',
-            servicos: [
-                { id: 's1', nome: 'Cabelo', preco: 35.00, ativo: true },
-                { id: 's2', nome: 'Barba', preco: 25.00, ativo: true },
-                { id: 's3', nome: 'Cabelo + Barba', preco: 55.00, ativo: true }
+        // ==========================================
+        // CONFIGURAÇÕES E ESTADO DO SISTEMA
+        // ==========================================
+        const STATE_KEY = "barberPro_v1_state";
+        const MIGRATION_MARKER = "barberPro_migrated_v1";
+
+        let appState = {
+            version: "1.0.0",
+            settings: {
+                commissionRate: 0.60,
+                barbershopRate: 0.40,
+                pin: null
+            },
+            services: [
+                { id: 's1', name: 'Cabelo', price: 35.00, active: true },
+                { id: 's2', name: 'Barba', price: 20.00, active: true },
+                { id: 's3', name: 'Pezinho', price: 10.00, active: true },
+                { id: 's4', name: 'Barba + Cabelo', price: 45.00, active: true },
+                { id: 's5', name: '1 Pente', price: 20.00, active: true },
+                { id: 's6', name: 'Barba + Corte simples', price: 40.00, active: true }
             ],
-            fichas: [
-                {
-                    id: 'F0001',
-                    data: '2026-08-28',
-                    servico: 'Cabelo',
-                    valor: 35.00,
-                    gorjeta: 10.00,
-                    periodo: 'Semana 35',
-                    semana: '24/08 → 29/08',
-                    mes: 'Agosto/2026',
-                    status: 'Confirmada',
-                    createdAt: '28/08/2026 18:42',
-                    updatedAt: '28/08/2026 18:42',
-                    history: [{ date: '28/08/2026 18:42', text: 'Ficha criada no valor de R$ 35,00' }]
-                }
-            ],
-            lixeira: [],
-            auditoria: [
-                { date: '28/08/2026 18:42', action: 'CRIAÇÃO', target: 'Ficha #F0001', details: 'Ficha criada com sucesso.' }
-            ],
-            backups: []
+            fichas: [],
+            closings: [],
+            audit: [],
+            snapshots: [],
+            migrationInfo: null
         };
 
-        // Carregar do localStorage se existir (compatível com chaves anteriores e atuais)
-        function loadDB() {
-            const possibleKeys = ['barber_control_v15', 'barber_control_v14', 'barber_control', 'barberControl', 'barbearia_db'];
-            let saved = null;
-            for (let key of possibleKeys) {
-                saved = localStorage.getItem(key);
-                if (saved) break;
-            }
-            if (saved) {
-                try {
-                    const parsed = JSON.parse(saved);
-                    db = { ...db, ...parsed };
-                } catch(e) { console.error("Erro ao carregar DB", e); }
-            }
-            if (!db.adminPassword) {
-                db.adminPassword = '1234';
-            }
-        }
+        let acaoPendentePin = null;
 
-        function saveDB() {
-            localStorage.setItem('barber_control_v15', JSON.stringify(db));
-            updateUI();
-        }
+        // ==========================================
+        // INICIALIZAÇÃO
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', () => {
+            loadState();
+            verificarMigracaoLegada();
+            inicializarCamposDataHora();
+            atualizarInterfaceCompleta();
+        });
 
-        // --- INICIALIZAÇÃO ---
-        window.onload = function() {
-            loadDB();
-            updateUI();
-            if(db.locked) {
-                document.getElementById('lockScreen').classList.remove('hidden');
-            }
-        };
-
-        function updateUI() {
-            renderTickets();
-            renderServices();
-            updateFinancials();
-            renderFechamentos();
-            renderReports();
-            renderTrash();
-            renderAudit();
-            renderPendencias();
-        }
-
-        // --- NAVEGAÇÃO DE ABAS ---
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('bg-barberGold', 'text-black');
-                btn.classList.add('text-zinc-400', 'hover:text-white', 'hover:bg-zinc-800');
-            });
-
+            document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+            
             document.getElementById(`tab-${tabId}`).classList.add('active');
-            const activeBtn = document.getElementById(`btn-${tabId}`);
-            activeBtn.classList.remove('text-zinc-400', 'hover:text-white', 'hover:bg-zinc-800');
-            activeBtn.classList.add('bg-barberGold', 'text-black');
-        }
-
-        function switchOpSub(subId) {
-            document.getElementById('op-sub-fichas').classList.add('hidden');
-            document.getElementById('op-sub-servicos').classList.add('hidden');
-            document.getElementById('btn-op-fichas').className = "pb-3 border-b-2 border-transparent text-zinc-400 hover:text-white font-medium";
-            document.getElementById('btn-op-servicos').className = "pb-3 border-b-2 border-transparent text-zinc-400 hover:text-white font-medium";
-
-            document.getElementById(`op-sub-${subId}`).classList.remove('hidden');
-            document.getElementById(`btn-op-${subId}`).className = "pb-3 border-b-2 border-barberGold text-white font-medium";
-        }
-
-        // --- BLOQUEIO DE SISTEMA ---
-        function toggleSystemLock() {
-            db.locked = true;
-            saveDB();
-            document.getElementById('unlockScreen').classList.remove('hidden');
-        }
-
-        function unlockSystem(e) {
-            e.preventDefault();
-            const pass = document.getElementById('unlockPassword').value.trim();
-            const currentPass = String(db.adminPassword || '1234').trim();
-            if(pass === currentPass || pass === '1234') {
-                db.locked = false;
-                document.getElementById('unlockScreen').classList.add('hidden');
-                document.getElementById('unlockPassword').value = '';
-                document.getElementById('unlockError').classList.add('hidden');
-                saveDB();
-                logAudit('DESBLOQUEIO', 'Sistema', 'Sistema desbloqueado com sucesso.');
-            } else {
-                document.getElementById('unlockError').classList.remove('hidden');
-            }
-        }
-
-        // --- FICHAS ---
-        function openNewTicketModal() {
-            if(db.weekStatus === 'Fechada') {
-                alert("Semana fechada! Não é permitido criar novas fichas.");
-                return;
-            }
-            document.getElementById('modalTicketTitle').innerText = "Nova Ficha de Atendimento";
-            document.getElementById('ticketEditId').value = "";
-            document.getElementById('ticketValue').value = "";
-            document.getElementById('ticketTip').value = "0.00";
-            populateServiceSelect();
-            updateTicketPrice();
-            document.getElementById('ticketModal').classList.remove('hidden');
-        }
-
-        function closeTicketModal() {
-            document.getElementById('ticketModal').classList.add('hidden');
-        }
-
-        function populateServiceSelect() {
-            const select = document.getElementById('ticketService');
-            select.innerHTML = db.servicos.filter(s => s.ativo).map(s => `<option value="${s.nome}" data-preco="${s.preco}">${s.nome} (R$ ${s.preco.toFixed(2)})</option>`).join('');
-        }
-
-        function updateTicketPrice() {
-            const select = document.getElementById('ticketService');
-            const selectedOpt = select.options[select.selectedIndex];
-            if(selectedOpt) {
-                const preco = selectedOpt.getAttribute('data-preco');
-                document.getElementById('ticketValue').value = preco;
-            }
-        }
-
-        function saveTicket(e) {
-            e.preventDefault();
-            const editId = document.getElementById('ticketEditId').value;
-            const servico = document.getElementById('ticketService').value;
-            const valor = parseFloat(document.getElementById('ticketValue').value);
-            const gorjeta = parseFloat(document.getElementById('ticketTip').value) || 0;
-            const status = document.getElementById('ticketStatus').value;
-            const now = new Date();
-            const dateStr = now.toISOString().split('T')[0];
-            const timeStr = now.toLocaleDateString('pt-BR') + ' ' + now.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-
-            if(editId) {
-                // Editar
-                const t = db.fichas.find(x => x.id === editId);
-                if(t) {
-                    const oldVal = t.valor;
-                    t.servico = servico;
-                    t.valor = valor;
-                    t.gorjeta = gorjeta;
-                    t.status = status;
-                    t.updatedAt = timeStr;
-                    t.history.push({ date: timeStr, text: `Ficha editada. Valor: R$ ${oldVal} → R$ ${valor}` });
-                    logAudit('EDIÇÃO', `Ficha ${t.id}`, `Editada ficha de serviço ${servico}.`);
-                }
-            } else {
-                // Criar nova
-                const newId = 'F' + String(db.fichas.length + 1).padStart(4, '0');
-                const novaFicha = {
-                    id: newId,
-                    data: dateStr,
-                    servico: servico,
-                    valor: valor,
-                    gorjeta: gorjeta,
-                    periodo: 'Semana Atual',
-                    semana: '24/08 → 29/08',
-                    mes: 'Agosto/2026',
-                    status: status,
-                    createdAt: timeStr,
-                    updatedAt: timeStr,
-                    history: [{ date: timeStr, text: `Ficha criada no valor de R$ ${valor.toFixed(2)}` }]
-                };
-                db.fichas.unshift(novaFicha);
-                logAudit('CRIAÇÃO', `Ficha ${newId}`, `Nova ficha criada para ${servico}.`);
-            }
-
-            closeTicketModal();
-            saveDB();
-        }
-
-        function renderTickets() {
-            const searchText = document.getElementById('filterTicketText').value.toLowerCase();
-            const statusFilter = document.getElementById('filterTicketStatus').value;
-            const tbody = document.getElementById('ticketsTableBody');
-
-            const filtered = db.fichas.filter(t => {
-                const matchText = t.id.toLowerCase().includes(searchText) || t.servico.toLowerCase().includes(searchText);
-                const matchStatus = statusFilter === 'todos' || t.status === statusFilter;
-                return matchText && matchStatus;
-            });
-
-            if(filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-zinc-500">Nenhuma ficha encontrada.</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = filtered.map(t => `
-                <tr class="hover:bg-zinc-900/40 border-b border-zinc-800 transition">
-                    <td class="p-4 font-mono font-bold text-white">${t.id}<br><span class="text-xs text-zinc-500 font-normal">${t.createdAt}</span></td>
-                    <td class="p-4 font-medium text-white">${t.servico}</td>
-                    <td class="p-4 text-zinc-300">R$ ${t.valor.toFixed(2)}</td>
-                    <td class="p-4 text-emerald-400">R$ ${t.gorjeta.toFixed(2)}</td>
-                    <td class="p-4 text-xs text-zinc-400">${t.mes}<br>${t.semana}</td>
-                    <td class="p-4"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ${t.status === 'Confirmada' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'}">${t.status}</span></td>
-                    <td class="p-4 text-right space-x-2">
-                        <button onclick="viewHistory('${t.id}')" title="Histórico" class="text-zinc-400 hover:text-white p-1.5"><i class="fa-solid fa-clock-rotate-left"></i></button>
-                        <button onclick="editTicket('${t.id}')" title="Editar" class="text-zinc-400 hover:text-barberGold p-1.5"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="deleteTicket('${t.id}')" title="Excluir" class="text-zinc-400 hover:text-red-400 p-1.5"><i class="fa-solid fa-trash"></i></button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function editTicket(id) {
-            if(db.weekStatus === 'Fechada') {
-                alert("Semana fechada! Edição bloqueada. Reabra o período na Administração se necessário.");
-                return;
-            }
-            const t = db.fichas.find(x => x.id === id);
-            if(!t) return;
-            document.getElementById('modalTicketTitle').innerText = `Editar Ficha ${t.id}`;
-            document.getElementById('ticketEditId').value = t.id;
-            populateServiceSelect();
-            document.getElementById('ticketService').value = t.servico;
-            document.getElementById('ticketValue').value = t.valor;
-            document.getElementById('ticketTip').value = t.gorjeta;
-            document.getElementById('ticketStatus').value = t.status;
-            document.getElementById('ticketModal').classList.remove('hidden');
-        }
-
-        function deleteTicket(id) {
-            if(db.weekStatus === 'Fechada') {
-                alert("Semana fechada! Exclusão bloqueada.");
-                return;
-            }
-            if(confirm("Tem certeza que deseja enviar esta ficha para a lixeira?")) {
-                const idx = db.fichas.findIndex(x => x.id === id);
-                if(idx !== -1) {
-                    const removed = db.fichas.splice(idx, 1)[0];
-                    db.lixeira.push({ ...removed, deletedAt: new Date().toLocaleString('pt-BR') });
-                    logAudit('EXCLUSÃO', `Ficha ${id}`, `Ficha movida para a lixeira.`);
-                    saveDB();
-                }
-            }
-        }
-
-        function viewHistory(id) {
-            const t = db.fichas.find(x => x.id === id) || db.lixeira.find(x => x.id === id);
-            if(!t) return;
-            const container = document.getElementById('ticketHistoryContent');
-            container.innerHTML = t.history.map(h => `<div class="border-l-2 border-barberGold pl-3 py-1 mb-2"><span class="text-zinc-500">${h.date}</span><p class="text-white">${h.text}</p></div>`).join('');
-            document.getElementById('historyModal').classList.remove('hidden');
-        }
-
-        function closeHistoryModal() {
-            document.getElementById('historyModal').classList.add('hidden');
-        }
-
-        // --- SERVIÇOS ---
-        function renderServices() {
-            const grid = document.getElementById('servicesGrid');
-            grid.innerHTML = db.servicos.map(s => `
-                <div class="bg-zinc-900/50 p-4 rounded-xl border border-zinc-800 space-y-2">
-                    <div class="flex justify-between items-center">
-                        <h4 class="font-bold text-white">${s.nome}</h4>
-                        <span class="text-barberGold font-bold">R$ ${s.preco.toFixed(2)}</span>
-                    </div>
-                    <div class="flex justify-between items-center text-xs text-zinc-400 pt-2 border-t border-zinc-800">
-                        <span>Status: ${s.ativo ? '🟢 Ativo' : '🔴 Inativo'}</span>
-                        <button onclick="editServicePrice('${s.id}')" class="text-barberGold hover:underline">Atualizar Preço</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function openNewServiceModal() {
-            const nome = prompt("Nome do novo serviço:");
-            if(!nome) return;
-            const preco = parseFloat(prompt("Preço do serviço (R$):", "35.00"));
-            if(isNaN(preco)) return;
-            const newId = 's' + (db.servicos.length + 1);
-            db.servicos.push({ id: newId, nome, preco, ativo: true });
-            logAudit('SERVIÇO', `Serviço ${nome}`, `Novo serviço criado com preço R$ ${preco}.`);
-            saveDB();
-        }
-
-        function editServicePrice(id) {
-            const s = db.servicos.find(x => x.id === id);
-            if(!s) return;
-            const novoPreco = parseFloat(prompt(`Novo preço para ${s.nome} (Atual: R$ ${s.preco}):`, s.preco));
-            if(!isNaN(novoPreco) && novoPreco !== s.preco) {
-                s.preco = novoPreco;
-                logAudit('PREÇO', `Serviço ${s.nome}`, `Preço alterado para R$ ${novoPreco}. Fichas antigas preservadas.`);
-                saveDB();
-            }
-        }
-
-        // --- FINANCEIRO & RECONCILIAÇÃO ---
-        function updateFinancials() {
-            let producao = 0;
-            let gorjetas = 0;
-            db.fichas.forEach(f => {
-                producao += f.valor;
-                gorjetas += f.gorjeta;
-            });
-            const comissao = producao * 0.60;
-            const devido = comissao + gorjetas;
-
-            document.getElementById('finProducao').innerText = `R$ ${producao.toFixed(2)}`;
-            document.getElementById('finComissao').innerText = `R$ ${comissao.toFixed(2)}`;
-            document.getElementById('finGorjetas').innerText = `R$ ${gorjetas.toFixed(2)}`;
-            document.getElementById('finDevido').innerText = `R$ ${devido.toFixed(2)}`;
-        }
-
-        function runReconciliation() {
-            let producao = db.fichas.reduce((acc, f) => acc + f.valor, 0);
-            let gorjetas = db.fichas.reduce((acc, f) => acc + f.gorjeta, 0);
-            let comissao = producao * 0.60;
-            let devido = comissao + gorjetas;
-
-            const badge = document.getElementById('reconStatusBadge');
-            const details = document.getElementById('reconDetails');
-
-            badge.className = "px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
-            badge.innerText = "🟢 VALORES CONCILIADOS";
-            details.innerHTML = `
-                <p><strong>Produção Calculada:</strong> R$ ${producao.toFixed(2)}</p>
-                <p><strong>Comissão (60%):</strong> R$ ${comissao.toFixed(2)}</p>
-                <p><strong>Gorjetas:</strong> R$ ${gorjetas.toFixed(2)}</p>
-                <p><strong>Total Devido:</strong> R$ ${devido.toFixed(2)}</p>
-                <p class="text-emerald-400 mt-2">✓ Verificação concluída sem divergências em ${db.fichas.length} fichas.</p>
-            `;
-            logAudit('RECONCILIAÇÃO', 'Financeiro', 'Reconciliação executada com sucesso.');
-        }
-
-        // --- FECHAMENTOS ---
-        function renderFechamentos() {
-            // Semana
-            const weekStatusEl = document.getElementById('currentWeekStatus');
-            weekStatusEl.innerText = db.weekStatus;
-            weekStatusEl.className = `text-xs px-2.5 py-1 rounded-full font-medium ${db.weekStatus === 'Fechada' ? 'bg-red-500/10 text-red-400' : 'bg-emerald-500/10 text-emerald-400'}`;
             
-            document.getElementById('weekDetailsContainer').innerHTML = `
-                <p><strong>Período:</strong> 24/08/2026 → 29/08/2026</p>
-                <p><strong>Fichas no período:</strong> ${db.fichas.length}</p>
-                <p><strong>Status:</strong> ${db.weekStatus === 'Fechada' ? '🔒 Bloqueada para edições' : '🟢 Aberta para lançamentos'}</p>
-            `;
+            // Ativa aba correspondente
+            const tabs = document.querySelectorAll('.nav-tab');
+            const tabMap = {'fichas':0, 'historico':1, 'servicos':2, 'analises':3, 'financeiro':4, 'backup':5, 'seguranca':6, 'auditoria':7, 'atualizacoes':8};
+            if(tabMap[tabId] !== undefined) {
+                tabs[tabMap[tabId]].classList.add('active');
+            }
 
-            // Mês
-            const monthStatusEl = document.getElementById('currentMonthStatus');
-            monthStatusEl.innerText = db.monthStatus;
-            monthStatusEl.className = `text-xs px-2.5 py-1 rounded-full font-medium ${db.monthStatus === 'Fechado' ? 'bg-red-500/10 text-red-400' : 'bg-emerald-500/10 text-emerald-400'}`;
-            
-            document.getElementById('monthDetailsContainer').innerHTML = `
-                <p><strong>Mês Referência:</strong> Agosto/2026</p>
-                <p><strong>Semanas validadas:</strong> 4 / 4</p>
-                <p><strong>Status:</strong> ${db.monthStatus === 'Fechado' ? '🔒 Fechado e protegido' : '🟢 Aberto'}</p>
-            `;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            atualizarInterfaceCompleta();
         }
 
-        let pendingClosingType = 'semana';
-        function openConferenciaModal(type) {
-            pendingClosingType = type;
-            document.getElementById('confModalTitle').innerText = `Conferência de Fechamento (${type === 'semana' ? 'Semanal' : 'Mensal'})`;
-            document.querySelectorAll('.conf-check').forEach(c => c.checked = false);
-            document.getElementById('conferenciaModal').classList.remove('hidden');
+        function inicializarCamposDataHora() {
+            const hoje = getLocalDateString();
+            const agora = getLocalTimeString();
+
+            const fichaData = document.getElementById('ficha-data');
+            const fichaHora = document.getElementById('ficha-hora');
+            if(fichaData && !fichaData.value) fichaData.value = hoje;
+            if(fichaHora && !fichaHora.value) fichaHora.value = agora;
+
+            const filtroMes = document.getElementById('filtro-mes');
+            if(filtroMes && !filtroMes.value) filtroMes.value = hoje.substring(0, 7);
+
+            const analiseMes = document.getElementById('analise-mes');
+            if(analiseMes && !analiseMes.value) analiseMes.value = hoje.substring(0, 7);
+
+            const fechamentoMes = document.getElementById('fechamento-mes-data');
+            if(fechamentoMes && !fechamentoMes.value) fechamentoMes.value = hoje.substring(0, 7);
+
+            const fechamentoSemana = document.getElementById('fechamento-semana-data');
+            if(fechamentoSemana && !fechamentoSemana.value) fechamentoSemana.value = getMonday(new Date()).toISOString().substring(0, 10);
         }
 
-        function closeConferenciaModal() {
-            document.getElementById('conferenciaModal').classList.add('hidden');
+        function getLocalDateString() {
+            const d = new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
         }
 
-        function executePeriodClosing() {
-            const checks = document.querySelectorAll('.conf-check');
-            for(let c of checks) {
-                if(!c.checked) {
-                    alert("Por favor, marque todos os itens do checklist de conferência.");
-                    return;
+        function getLocalTimeString() {
+            const d = new Date();
+            const hours = String(d.getHours()).padStart(2, '0');
+            const minutes = String(d.getMinutes()).padStart(2, '0');
+            return `${hours}:${minutes}`;
+        }
+
+        function getMonday(d) {
+            d = new Date(d);
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+            return new Date(d.setDate(diff));
+        }
+
+        // ==========================================
+        // GERENCIAMENTO DE ESTADO E LOCALSTORAGE
+        // ==========================================
+        function loadState() {
+            try {
+                const raw = localStorage.getItem(STATE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    appState = normalizeState(parsed);
                 }
+            } catch (e) {
+                console.error("Erro ao carregar estado do localStorage:", e);
+                criarSnapshotInterno("Recuperação de Erro de Leitura");
+            }
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem(STATE_KEY, JSON.stringify(appState));
+            } catch (e) {
+                console.error("Erro ao salvar estado:", e);
+                alert("Erro crítico ao salvar dados no navegador!");
+            }
+        }
+
+        function normalizeState(data) {
+            return {
+                version: data.version || "1.0.0",
+                settings: Object.assign({ commissionRate: 0.60, barbershopRate: 0.40, pin: null }, data.settings),
+                services: Array.isArray(data.services) ? data.services : appState.services,
+                fichas: Array.isArray(data.fichas) ? data.fichas : [],
+                closings: Array.isArray(data.closings) ? data.closings : [],
+                audit: Array.isArray(data.audit) ? data.audit : [],
+                snapshots: Array.isArray(data.snapshots) ? data.snapshots : [],
+                migrationInfo: data.migrationInfo || null
+            };
+        }
+
+        function criarSnapshotInterno(descricao) {
+            const snapshot = {
+                timestamp: new Date().toISOString(),
+                label: descricao,
+                state: JSON.parse(JSON.stringify(appState))
+            };
+            appState.snapshots.unshift(snapshot);
+            if (appState.snapshots.length > 15) {
+                appState.snapshots.pop(); // Mantém no máximo 15 snapshots
+            }
+            saveState();
+        }
+
+        function registrarAuditoria(acao, descricao) {
+            const item = {
+                timestamp: new Date().toISOString(),
+                data: getLocalDateString(),
+                hora: getLocalTimeString(),
+                acao: acao,
+                descricao: descricao
+            };
+            appState.audit.unshift(item);
+            if (appState.audit.length > 100) appState.audit.pop();
+            saveState();
+        }
+
+        // ==========================================
+        // SISTEMA DE MIGRAÇÃO LEGADA (ROBUSTO)
+        // ==========================================
+        function verificarMigracaoLegada() {
+            if (localStorage.getItem(MIGRATION_MARKER) === "true") {
+                return; // Já migrado anteriormente
             }
 
-            if(pendingClosingType === 'semana') {
-                db.weekStatus = 'Fechada';
-                logAudit('FECHAMENTO', 'Semana', 'Semana fechada com sucesso após conferência.');
-            } else {
-                if(db.weekStatus !== 'Fechada') {
-                    alert("O mês não pode ser fechado enquanto houver semanas pendentes/abertas.");
-                    return;
-                }
-                db.monthStatus = 'Fechado';
-                logAudit('FECHAMENTO', 'Mês', 'Mês de Agosto/2026 fechado com sucesso.');
-            }
-
-            closeConferenciaModal();
-            saveDB();
-        }
-
-        function openReopenModal(type) {
-            document.getElementById('reopenType').value = type;
-            document.getElementById('reopenModalTitle').innerText = `Reabrir ${type === 'semana' ? 'Semana' : 'Mês'}`;
-            document.getElementById('reopenPassword').value = '';
-            document.getElementById('reopenReason').value = '';
-            document.getElementById('reopenModal').classList.remove('hidden');
-        }
-
-        function closeReopenModal() {
-            document.getElementById('reopenModal').classList.add('hidden');
-        }
-
-        function executeReopen(e) {
-            e.preventDefault();
-            const type = document.getElementById('reopenType').value;
-            const pass = document.getElementById('reopenPassword').value.trim();
-            const currentPass = String(db.adminPassword || '1234').trim();
-            const reason = document.getElementById('reopenReason').value;
-
-            if(pass !== currentPass && pass !== '1234') {
-                alert("Senha administrativa incorreta!");
-                return;
-            }
-
-            if(type === 'semana') {
-                db.weekStatus = 'Aberta';
-                logAudit('REABERTURA', 'Semana', `Semana reaberta. Motivo: ${reason}`);
-            } else {
-                db.monthStatus = 'Aberto';
-                logAudit('REABERTURA', 'Mês', `Mês reaberto. Motivo: ${reason}`);
-            }
-
-            closeReopenModal();
-            saveDB();
-            alert("Período reabrito com sucesso.");
-        }
-
-        // --- RELATÓRIOS ---
-        function renderReports() {
-            const tbody = document.getElementById('reportServicesTable');
-            const counts = {};
-            db.fichas.forEach(f => {
-                if(!counts[f.servico]) counts[f.servico] = { qtd: 0, prod: 0 };
-                counts[f.servico].qtd += 1;
-                counts[f.servico].prod += f.valor;
-            });
-
-            const keys = Object.keys(counts);
-            if(keys.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" class="text-center text-zinc-500 py-4">Sem dados para relatório.</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = keys.map(k => `
-                <tr class="border-b border-zinc-800">
-                    <td class="py-3 font-medium text-white">${k}</td>
-                    <td class="py-3 text-center text-zinc-300">${counts[k].qtd}</td>
-                    <td class="py-3 text-right text-barberGold font-semibold">R$ ${counts[k].prod.toFixed(2)}</td>
-                </tr>
-            `).join('');
-        }
-
-        function runUniversalComparison() {
-            const prod = db.fichas.reduce((acc, f) => acc + f.valor, 0);
-            const res = document.getElementById('comparisonResult');
-            res.innerHTML = `
-                <p class="font-bold text-white mb-2">Comparativo de Período:</p>
-                <p>Atendimentos totais: ${db.fichas.length}</p>
-                <p>Produção comparada: R$ ${prod.toFixed(2)}</p>
-                <p class="text-emerald-400 mt-2">✓ Dados consolidados sem variação atípica.</p>
-            `;
-            logAudit('COMPARATIVO', 'Relatórios', 'Comparativo universal executado.');
-        }
-
-        // --- ADMINISTRAÇÃO & SEGURANÇA ---
-        function changePassword(e) {
-            e.preventDefault();
-            const curr = document.getElementById('currentPassword').value.trim();
-            const novo = document.getElementById('newPassword').value.trim();
-            const currentPass = String(db.adminPassword || '1234').trim();
-
-            if(curr !== currentPass && curr !== '1234') {
-                alert("Senha atual incorreta!");
-                return;
-            }
-            db.adminPassword = novo;
-            document.getElementById('currentPassword').value = '';
-            document.getElementById('newPassword').value = '';
-            logAudit('SEGURANÇA', 'Senha', 'Senha administrativa alterada.');
-            saveDB();
-            alert("Senha alterada com sucesso!");
-        }
-
-        function runDiagnostics() {
-            const res = document.getElementById('diagResult');
-            res.innerHTML = `🟢 Sistema íntegro. ${db.fichas.length} fichas verificadas. Nenhuma inconsistência estrutural encontrada.`;
-            logAudit('DIAGNÓSTICO', 'Sistema', 'Diagnóstico de integridade executado.');
-        }
-
-        function recalculateData() {
-            updateFinancials();
-            alert("Dados recalculados com sucesso com base nos registros originais.");
-            logAudit('RECALCULO', 'Sistema', 'Recálculo manual de dados executado.');
-        }
-
-        // --- BACKUP ---
-        function exportBackup() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db, null, 2));
-            const dlAnchor = document.createElement('a');
-            dlAnchor.setAttribute("href", dataStr);
-            dlAnchor.setAttribute("download", `barber_control_v15_backup_${new Date().toISOString().split('T')[0]}.json`);
-            document.body.appendChild(dlAnchor);
-            dlAnchor.click();
-            dlAnchor.remove();
-            logAudit('BACKUP', 'Exportação', 'Backup manual exportado.');
-        }
-
-        function importBackup(e) {
-            const file = e.target.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onload = function(evt) {
-                try {
-                    const imported = JSON.parse(evt.target.result);
-                    if(imported && imported.fichas) {
-                        db = imported;
-                        saveDB();
-                        updateUI();
-                        alert("Backup importado com sucesso!");
-                        logAudit('BACKUP', 'Importação', 'Backup restaurado com sucesso.');
-                    } else {
-                        alert("Arquivo de backup inválido.");
+            // 1. Criar cópia de segurança de segurança em localStorage antes de migrar
+            const safetyKey = `barberPro_safety_backup_${Date.now()}`;
+            try {
+                const allStorage = {};
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key !== STATE_KEY) {
+                        allStorage[key] = localStorage.getItem(key);
                     }
-                } catch(err) {
-                    alert("Erro ao ler arquivo JSON.");
                 }
+                localStorage.setItem(safetyKey, JSON.stringify(allStorage));
+            } catch (e) {
+                console.warn("Não foi possível gerar backup de segurança automático pré-migração", e);
+            }
+
+            // 2. Procurar chaves potenciais
+            const possibleKeywords = ["ficha", "fichas", "record", "records", "atendimento", "atendimentos", "servico", "servicos", "historico", "dados", "barber"];
+            let recordsMigratedCount = 0;
+            let keysFound = [];
+            let legacyRecords = [];
+
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key === STATE_KEY || key === safetyKey || key.startsWith("barberPro_")) continue;
+
+                const lowerKey = key.toLowerCase();
+                const matched = possibleKeywords.some(kw => lowerKey.includes(kw));
+
+                if (matched) {
+                    keysFound.push(key);
+                    try {
+                        const val = JSON.parse(localStorage.getItem(key));
+                        if (Array.isArray(val)) {
+                            legacyRecords = legacyRecords.concat(val);
+                        } else if (val && typeof val === 'object') {
+                            // Se for objeto, tenta extrair arrays internos
+                            for (let subKey in val) {
+                                if (Array.isArray(val[subKey])) {
+                                    legacyRecords = legacyRecords.concat(val[subKey]);
+                                }
+                            }
+                            legacyRecords.push(val);
+                        }
+                    } catch (err) {
+                        console.warn(`Não foi possível parsear a chave legada: ${key}`, err);
+                    }
+                }
+            }
+
+            // 3. Normalizar e importar registros legados sem duplicidade
+            if (legacyRecords.length > 0) {
+                let addedCount = 0;
+                legacyRecords.forEach(item => {
+                    const date = item.date || item.data || getLocalDateString();
+                    const time = item.time || item.hora || "12:00";
+                    const serviceName = item.service || item.servico || item.nomeServico || "Serviço Legado";
+                    const amount = parseFloat(item.amount || item.valor || item.preco || 0);
+                    const tip = parseFloat(item.tip || item.gorjeta || 0);
+
+                    if (amount > 0) {
+                        // Verificar duplicidade por combinação segura
+                        const duplicate = appState.fichas.some(f => 
+                            f.date === date && f.time === time && Math.abs(f.amount - amount) < 0.01 && f.serviceName === serviceName
+                        );
+
+                        if (!duplicate) {
+                            const barberShare = amount * appState.settings.commissionRate;
+                            const shopShare = amount * appState.settings.barbershopRate;
+
+                            appState.fichas.push({
+                                id: 'mig_' + Math.random().toString(36.2),
+                                date: date,
+                                time: time,
+                                serviceName: serviceName,
+                                amount: amount,
+                                tip: tip,
+                                barberShare: barberShare,
+                                shopShare: shopShare,
+                                migrated: true
+                            });
+                            addedCount++;
+                        }
+                    }
+                });
+
+                recordsMigratedCount = addedCount;
+            }
+
+            // 4. Marcar como migrado e registrar
+            localStorage.setItem(MIGRATION_MARKER, "true");
+            appState.migrationInfo = {
+                migratedAt: new Date().toISOString(),
+                keysFound: keysFound,
+                recordsMigrated: recordsMigratedCount
+            };
+
+            criarSnapshotInterno("Migração Automática de Dados Legados");
+            registrarAuditoria("Dados antigos migrados", `${recordsMigratedCount} registros importados de ${keysFound.length} chaves.`);
+            saveState();
+
+            if (keysFound.length > 0 && recordsMigratedCount > 0) {
+                setTimeout(() => {
+                    alert(`BARBER PRO — MIGRAÇÃO CONCLUÍDA!\n\nForam encontrados dados antigos em ${keysFound.length} chave(s).\nTotal de registros migrados: ${recordsMigratedCount}.\n\n⚠️ As chaves antigas foram TOTALMENTE PRESERVADAS no navegador.`);
+                }, 500);
+            }
+        }
+
+        // ==========================================
+        // FUNCIONALIDADES: 1. FICHAS
+        // ==========================================
+        function popularSelectServicos() {
+            const select = document.getElementById('ficha-servico');
+            if(!select) return;
+            select.innerHTML = '';
+
+            appState.services.filter(s => s.active).forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = `${s.name} — R$ ${s.price.toFixed(2)}`;
+                opt.dataset.price = s.price;
+                select.appendChild(opt);
+            });
+
+            handleServiceChange();
+        }
+
+        function handleServiceChange() {
+            const select = document.getElementById('ficha-servico');
+            const valorInput = document.getElementById('ficha-valor');
+            if(select && select.selectedOptions.length > 0) {
+                const price = select.selectedOptions[0].dataset.price;
+                if(valorInput) valorInput.value = price;
+            }
+        }
+
+        function handleFichaSubmit(event) {
+            event.preventDefault();
+            const date = document.getElementById('ficha-data').value;
+            const time = document.getElementById('ficha-hora').value;
+            const servicoId = document.getElementById('ficha-servico').value;
+            const amount = parseFloat(document.getElementById('ficha-valor').value);
+            const tip = parseFloat(document.getElementById('ficha-gorjeta').value) || 0;
+
+            const servicoObj = appState.services.find(s => s.id === servicoId);
+            const serviceName = servicoObj ? servicoObj.name : "Serviço";
+
+            const barberShare = amount * appState.settings.commissionRate;
+            const shopShare = amount * appState.settings.barbershopRate;
+
+            const novaFicha = {
+                id: 'ficha_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+                date: date,
+                time: time,
+                serviceId: servicoId,
+                serviceName: serviceName,
+                amount: amount,
+                tip: tip,
+                barberShare: barberShare,
+                shopShare: shopShare
+            };
+
+            appState.fichas.unshift(novaFicha);
+            criarSnapshotInterno(`Adição de ficha (${serviceName})`);
+            registrarAuditoria("Ficha adicionada", `Atendimento de ${serviceName} no valor de R$ ${amount.toFixed(2)}`);
+            saveState();
+
+            document.getElementById('form-ficha').reset();
+            inicializarCamposDataHora();
+            popularSelectServicos();
+            atualizarInterfaceCompleta();
+
+            alert("Ficha registrada com sucesso!");
+        }
+
+        function atualizarIndicadoresHoje() {
+            const hoje = getLocalDateString();
+            const fichasHoje = appState.fichas.filter(f => f.date === hoje);
+
+            let totalFichas = 0;
+            let comissaoTotal = 0;
+            let gorjetasTotal = 0;
+
+            fichasHoje.forEach(f => {
+                totalFichas += f.amount;
+                comissaoTotal += f.barberShare;
+                gorjetasTotal += f.tip;
+            });
+
+            const totalPrevisto = comissaoTotal + gorjetasTotal;
+
+            document.getElementById('ind-atendimentos').textContent = fichasHoje.length;
+            document.getElementById('ind-total-fichas').textContent = `R$ ${totalFichas.toFixed(2)}`;
+            document.getElementById('ind-comissao').textContent = `R$ ${comissaoTotal.toFixed(2)}`;
+            document.getElementById('ind-gorjetas').textContent = `R$ ${gorjetasTotal.toFixed(2)}`;
+            document.getElementById('ind-total-previsto').textContent = `R$ ${totalPrevisto.toFixed(2)}`;
+        }
+
+        // ==========================================
+        // FUNCIONALIDADES: 2. HISTÓRICO
+        // ==========================================
+        function popularFiltroServicosHistorico() {
+            const select = document.getElementById('filtro-servico');
+            if(!select) return;
+            const currentVal = select.value;
+            select.innerHTML = '<option value="">Todos os serviços</option>';
+            appState.services.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.name;
+                opt.textContent = s.name;
+                select.appendChild(opt);
+            });
+            select.value = currentVal;
+        }
+
+        function renderHistorico() {
+            popularFiltroServicosHistorico();
+            const mesFiltro = document.getElementById('filtro-mes').value;
+            const servicoFiltro = document.getElementById('filtro-servico').value;
+            const tbody = document.querySelector('#tabela-historico tbody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+
+            let fichasFiltradas = appState.fichas.filter(f => {
+                if (mesFiltro && !f.date.startsWith(mesFiltro)) return false;
+                if (servicoFiltro && f.serviceName !== servicoFiltro) return false;
+                return true;
+            });
+
+            if (fichasFiltradas.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="empty-state">Nenhum registro encontrado.</td></tr>`;
+                return;
+            }
+
+            fichasFiltradas.forEach(f => {
+                const [ano, mes, dia] = f.date.split('-');
+                const dataFormatada = `${dia}/${mes}/${ano}`;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${dataFormatada} às ${f.time}</td>
+                    <td>${f.serviceName}</td>
+                    <td>R$ ${f.amount.toFixed(2)}</td>
+                    <td>R$ ${f.barberShare.toFixed(2)}</td>
+                    <td>R$ ${f.shopShare.toFixed(2)}</td>
+                    <td>R$ ${f.tip.toFixed(2)}</td>
+                    <td>
+                        <div class="actions-group">
+                            <button class="btn btn-secondary btn-sm" onclick="editarFicha('${f.id}')">Editar</button>
+                            <button class="btn btn-danger btn-sm" onclick="excluirFicha('${f.id}')">Excluir</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function excluirFicha(id) {
+            if(!confirm("Tem certeza que deseja excluir esta ficha? Um snapshot será criado.")) return;
+            criarSnapshotInterno("Pré-exclusão de ficha");
+            const ficha = appState.fichas.find(f => f.id === id);
+            appState.fichas = appState.fichas.filter(f => f.id !== id);
+            registrarAuditoria("Ficha excluída", `Remoção do atendimento ${ficha ? ficha.serviceName : id}`);
+            saveState();
+            atualizarInterfaceCompleta();
+        }
+
+        function editarFicha(id) {
+            const ficha = appState.fichas.find(f => f.id === id);
+            if(!ficha) return;
+
+            abrirModal("Editar Atendimento", `
+                <form onsubmit="salvarEdicaoFicha(event, '${id}')">
+                    <div class="form-group">
+                        <label>Data</label>
+                        <input type="date" id="edit-data" value="${ficha.date}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Hora</label>
+                        <input type="time" id="edit-hora" value="${ficha.time}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Serviço</label>
+                        <input type="text" id="edit-servico" value="${ficha.serviceName}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Valor (R$)</label>
+                        <input type="number" step="0.01" id="edit-valor" value="${ficha.amount}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Gorjeta (R$)</label>
+                        <input type="number" step="0.01" id="edit-gorjeta" value="${ficha.tip}" required>
+                    </div>
+                    <button type="submit" class="btn">Salvar Alterações</button>
+                </form>
+            `);
+        }
+
+        function salvarEdicaoFicha(event, id) {
+            event.preventDefault();
+            criarSnapshotInterno("Pré-edição de ficha");
+
+            const index = appState.fichas.findIndex(f => f.id === id);
+            if(index !== -1) {
+                const amount = parseFloat(document.getElementById('edit-valor').value);
+                const tip = parseFloat(document.getElementById('edit-gorjeta').value) || 0;
+                
+                appState.fichas[index].date = document.getElementById('edit-data').value;
+                appState.fichas[index].time = document.getElementById('edit-hora').value;
+                appState.fichas[index].serviceName = document.getElementById('edit-servico').value;
+                appState.fichas[index].amount = amount;
+                appState.fichas[index].tip = tip;
+                appState.fichas[index].barberShare = amount * appState.settings.commissionRate;
+                appState.fichas[index].shopShare = amount * appState.settings.barbershopRate;
+
+                registrarAuditoria("Ficha editada", `Alteração no atendimento ID ${id}`);
+                saveState();
+                fecharModal();
+                atualizarInterfaceCompleta();
+                alert("Ficha atualizada com sucesso!");
+            }
+        }
+
+        // ==========================================
+        // FUNCIONALIDADES: 3. SERVIÇOS
+        // ==========================================
+        function handleServicoSubmit(event) {
+            event.preventDefault();
+            const nome = document.getElementById('servico-nome').value;
+            const preco = parseFloat(document.getElementById('servico-preco').value);
+
+            const novoServico = {
+                id: 'serv_' + Date.now(),
+                name: nome,
+                price: preco,
+                active: true
+            };
+
+            appState.services.push(novoServico);
+            criarSnapshotInterno(`Adição de serviço (${nome})`);
+            registrarAuditoria("Serviço adicionado", `Cadastro de ${nome} por R$ ${preco.toFixed(2)}`);
+            saveState();
+
+            document.getElementById('form-servico').reset();
+            atualizarInterfaceCompleta();
+            alert("Serviço cadastrado com sucesso!");
+        }
+
+        function renderServicos() {
+            const tbody = document.querySelector('#tabela-servicos tbody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+
+            appState.services.forEach(s => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${s.name}</td>
+                    <td>R$ ${s.price.toFixed(2)}</td>
+                    <td><span class="badge ${s.active ? 'badge-success' : 'badge-danger'}">${s.active ? 'Ativo' : 'Inativo'}</span></td>
+                    <td>
+                        <div class="actions-group">
+                            <button class="btn btn-secondary btn-sm" onclick="toggleServico('${s.id}')">${s.active ? 'Desativar' : 'Ativar'}</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function toggleServico(id) {
+            const servico = appState.services.find(s => s.id === id);
+            if(servico) {
+                servico.active = !servico.active;
+                criarSnapshotInterno(`Alteração de status do serviço (${servico.name})`);
+                registrarAuditoria("Serviço alterado", `Serviço ${servico.name} status para ${servico.active ? 'Ativo' : 'Inativo'}`);
+                saveState();
+                atualizarInterfaceCompleta();
+            }
+        }
+
+        // ==========================================
+        // FUNCIONALIDADES: 4. ANÁLISES
+        // ==========================================
+        function renderAnalises() {
+            const mesSel = document.getElementById('analise-mes').value;
+            if(!mesSel) return;
+
+            const fichasMes = appState.fichas.filter(f => f.date.startsWith(mesSel));
+            let totalAtendimentos = fichasMes.length;
+            let faturamentoTotal = 0;
+            let comissaoTotal = 0;
+            let gorjetasTotal = 0;
+            let servicosContagem = {};
+
+            fichasMes.forEach(f => {
+                faturamentoTotal += f.amount;
+                comissaoTotal += f.barberShare;
+                gorjetasTotal += f.tip;
+                servicosContagem[f.serviceName] = (servicosContagem[f.serviceName] || 0) + 1;
+            });
+
+            const totalPrevisto = comissaoTotal + gorjetasTotal;
+            const ticketMedio = totalAtendimentos > 0 ? faturamentoTotal / totalAtendimentos : 0;
+
+            document.getElementById('ana-atendimentos').textContent = totalAtendimentos;
+            document.getElementById('ana-total-fichas').textContent = `R$ ${faturamentoTotal.toFixed(2)}`;
+            document.getElementById('ana-comissao').textContent = `R$ ${comissaoTotal.toFixed(2)}`;
+            document.getElementById('ana-gorjetas').textContent = `R$ ${gorjetasTotal.toFixed(2)}`;
+            document.getElementById('ana-total-previsto').textContent = `R$ ${totalPrevisto.toFixed(2)}`;
+            document.getElementById('ana-ticket-medio').textContent = `R$ ${ticketMedio.toFixed(2)}`;
+
+            // Destaques
+            let servicoMaisRealizado = "Nenhum";
+            let maxCount = 0;
+            for(let s in servicosContagem) {
+                if(servicosContagem[s] > maxCount) {
+                    maxCount = servicosContagem[s];
+                    servicoMaisRealizado = s;
+                }
+            }
+
+            const destaquesDiv = document.getElementById('analises-destaques');
+            destaquesDiv.innerHTML = `
+                • <b>Serviço mais realizado:</b> ${servicoMaisRealizado} (${maxCount} vezes)<br>
+                • <b>Participação da Barbearia (40%):</b> R$ ${(faturamentoTotal * appState.settings.barbershopRate).toFixed(2)}<br>
+                • <b>Volume diário médio:</b> ${(totalAtendimentos / 26).toFixed(1)} atendimentos/dia útil
+            `;
+        }
+
+        // ==========================================
+        // FUNCIONALIDADES: 5. FECHAMENTO E FINANCEIRO
+        // ==========================================
+        function renderFechamentoSemanal() {
+            const dataInput = document.getElementById('fechamento-semana-data').value;
+            if(!dataInput) return;
+
+            const inicio = new Date(dataInput + 'T00:00:00');
+            const fim = new Date(inicio);
+            fim.setDate(fim.getDate() + 5); // Seg a Sáb (6 dias)
+
+            const inicioStr = inicio.toISOString().substring(0, 10);
+            const fimStr = fim.toISOString().substring(0, 10);
+
+            const fichasSemana = appState.fichas.filter(f => f.date >= inicioStr && f.date <= fimStr);
+            let producao = 0, comissao = 0, gorjetas = 0;
+
+            fichasSemana.forEach(f => {
+                producao += f.amount;
+                comissao += f.barberShare;
+                gorjetas += f.tip;
+            });
+
+            const totalPrevisto = comissao + gorjetas;
+
+            const container = document.getElementById('resultado-fechamento-semana');
+            container.innerHTML = `
+                <div style="font-size: 0.9rem; line-height: 1.6; margin-top: 10px;">
+                    • <b>Período:</b> ${inicioStr.split('-').reverse().join('/')} até ${fimStr.split('-').reverse().join('/')}<br>
+                    • <b>Total de Atendimentos:</b> ${fichasSemana.length}<br>
+                    • <b>Produção em Fichas:</b> R$ ${producao.toFixed(2)}<br>
+                    • <b>Sua Comissão (60%):</b> R$ ${comissao.toFixed(2)}<br>
+                    • <b>Gorjetas:</b> R$ ${gorjetas.toFixed(2)}<br>
+                    <hr style="border-color: var(--border-color); margin: 10px 0;">
+                    • <b>Total Previsto para Você:</b> <span style="color: var(--accent-gold); font-weight: bold;">R$ ${totalPrevisto.toFixed(2)}</span>
+                </div>
+            `;
+        }
+
+        function renderFechamentoMensal() {
+            const mesSel = document.getElementById('fechamento-mes-data').value;
+            if(!mesSel) return;
+
+            const fichasMes = appState.fichas.filter(f => f.date.startsWith(mesSel));
+            let producao = 0, comissao = 0, gorjetas = 0;
+
+            fichasMes.forEach(f => {
+                producao += f.amount;
+                comissao += f.barberShare;
+                gorjetas += f.tip;
+            });
+
+            const totalPrevisto = comissao + gorjetas;
+            const container = document.getElementById('resultado-fechamento-mes');
+            container.innerHTML = `
+                <div style="font-size: 0.9rem; line-height: 1.6; margin-top: 10px;">
+                    • <b>Produção Total no Mês:</b> R$ ${producao.toFixed(2)}<br>
+                    • <b>Comissão Acumulada (60%):</b> R$ ${comissao.toFixed(2)}<br>
+                    • <b>Gorjetas Acumuladas:</b> R$ ${gorjetas.toFixed(2)}<br>
+                    • <b>Parte Barbearia (40%):</b> R$ ${(producao * appState.settings.barbershopRate).toFixed(2)}<br>
+                    <hr style="border-color: var(--border-color); margin: 10px 0;">
+                    • <b>Total Geral Previsto:</b> <span style="color: var(--accent-gold); font-weight: bold;">R$ ${totalPrevisto.toFixed(2)}</span><br><br>
+                    <button class="btn btn-secondary" onclick="confirmarFechamentoMes('${mesSel}')">🔒 Consolidar Fechamento do Mês</button>
+                </div>
+            `;
+        }
+
+        function confirmarFechamentoMes(mes) {
+            if(appState.settings.pin) {
+                acaoPendentePin = () => executarFechamentoMes(mes);
+                abrirModalPin();
+            } else {
+                executarFechamentoMes(mes);
+            }
+        }
+
+        function executarFechamentoMes(mes) {
+            criarSnapshotInterno(`Fechamento do mês ${mes}`);
+            appState.closings.push({
+                type: 'month',
+                reference: mes,
+                closedAt: new Date().toISOString()
+            });
+            registrarAuditoria("Fechamento realizado", `Consolidação oficial do mês ${mes}`);
+            saveState();
+            alert(`Mês ${mes} fechado e consolidado com sucesso!`);
+        }
+
+        // ==========================================
+        // FUNCIONALIDADES: 6, 7 & 8. BACKUP & SNAPSHOTS
+        // ==========================================
+        function exportBackup() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
+            const now = new Date();
+            const dateStr = now.toISOString().substring(0, 10);
+            const timeStr = `${String(now.getHours()).padStart(2,'0')}-${String(now.getMinutes()).padStart(2,'0')}`;
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `BarberPro_Backup_${dateStr}_${timeStr}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+
+            criarSnapshotInterno("Exportação de Backup");
+            registrarAuditoria("Backup criado", "Backup completo exportado em JSON.");
+        }
+
+        function importBackup(event) {
+            const file = event.target.files[0];
+            if(!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if(!parsed.version || !Array.isArray(parsed.fichas)) {
+                        throw new Error("Formato de arquivo inválido.");
+                    }
+
+                    if(appState.settings.pin) {
+                        acaoPendentePin = () => executarRestauracao(parsed);
+                        abrirModalPin();
+                    } else {
+                        if(confirm("Deseja restaurar este backup? O estado atual será salvo em snapshot.")) {
+                            executarRestauracao(parsed);
+                        }
+                    }
+                } catch (err) {
+                    alert("Erro ao validar arquivo de backup: " + err.message);
+                }
+                event.target.value = '';
             };
             reader.readAsText(file);
         }
 
-        // --- PENDÊNCIAS ---
-        function renderPendencias() {
-            const container = document.getElementById('pendenciasContainer');
-            let pendencias = [];
-            if(db.weekStatus !== 'Fechada') pendencias.push("Semana atual encontra-se aberta.");
-            if(db.monthStatus !== 'Fechado') pendencias.push("Mês atual encontra-se aberto.");
-
-            if(pendencias.length === 0) {
-                container.innerHTML = `<span class="text-emerald-400">🟢 Nenhuma pendência encontrada. Sistema 100% regular.</span>`;
-            } else {
-                container.innerHTML = `<ul class="list-disc pl-5 space-y-1 text-amber-400">${pendencias.map(p => `<li>${p}</li>`).join('')}</ul>`;
-            }
+        function executarRestauracao(parsedState) {
+            criarSnapshotInterno("Pré-restauração de Backup");
+            appState = normalizeState(parsedState);
+            registrarAuditoria("Backup restaurado", `Restauração bem-sucedida de ${appState.fichas.length} fichas.`);
+            saveState();
+            atualizarInterfaceCompleta();
+            alert(`Backup restaurado com sucesso!\nTotal de fichas carregadas: ${appState.fichas.length}`);
         }
 
-        // --- LIXEIRA ---
-        function renderTrash() {
-            const tbody = document.getElementById('trashTableBody');
-            document.getElementById('trashCount').innerText = `${db.lixeira.length} itens`;
+        function renderSnapshots() {
+            const tbody = document.querySelector('#tabela-snapshots tbody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
 
-            if(db.lixeira.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" class="text-center text-zinc-500 py-4">Lixeira vazia.</td></tr>`;
+            if(appState.snapshots.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="empty-state">Nenhum snapshot interno disponível.</td></tr>`;
                 return;
             }
 
-            tbody.innerHTML = db.lixeira.map(t => `
-                <tr class="border-b border-zinc-800">
-                    <td class="py-3 font-mono text-white">${t.id} - ${t.servico} (R$ ${t.valor.toFixed(2)})</td>
-                    <td class="py-3 text-zinc-400 text-xs">${t.deletedAt}</td>
-                    <td class="py-3 text-right space-x-2">
-                        <button onclick="restoreTicket('${t.id}')" class="text-emerald-400 hover:underline text-xs">♻️ Restaurar</button>
-                        <button onclick="permanentDelete('${t.id}')" class="text-red-400 hover:underline text-xs">🗑️ Excluir</button>
+            appState.snapshots.forEach((snap, idx) => {
+                const data = new Date(snap.timestamp);
+                const dataFmt = `${String(data.getDate()).padStart(2,'0')}/${String(data.getMonth()+1).padStart(2,'0')}/${data.getFullYear()} ${String(data.getHours()).padStart(2,'0')}:${String(data.getMinutes()).padStart(2,'0')}`;
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${dataFmt}</td>
+                    <td>${snap.label}</td>
+                    <td>
+                        <button class="btn btn-secondary btn-sm" onclick="restaurarSnapshot(${idx})">Restaurar Este</button>
                     </td>
-                </tr>
-            `).join('');
+                `;
+                tbody.appendChild(tr);
+            });
         }
 
-        function restoreTicket(id) {
-            const idx = db.lixeira.findIndex(x => x.id === id);
-            if(idx !== -1) {
-                const item = db.lixeira.splice(idx, 1)[0];
-                delete item.deletedAt;
-                db.fichas.push(item);
-                logAudit('RESTAURAÇÃO', `Ficha ${id}`, 'Ficha restaurada da lixeira.');
-                saveDB();
+        function restaurarSnapshot(index) {
+            if(!confirm("Deseja restaurar o sistema para este snapshot?")) return;
+            const target = appState.snapshots[index];
+            if(target) {
+                appState = JSON.parse(JSON.stringify(target.state));
+                registrarAuditoria("Snapshot restaurado", `Retorno ao ponto: ${target.label}`);
+                saveState();
+                atualizarInterfaceCompleta();
+                alert("Sistema restaurado para o snapshot com sucesso!");
             }
         }
 
-        function permanentDelete(id) {
-            if(confirm("ATENÇÃO: Esta ação não poderá ser desfeita. Deseja excluir definitivamente?")) {
-                db.lixeira = db.lixeira.filter(x => x.id !== id);
-                logAudit('EXCLUSÃO DEFINITIVA', `Ficha ${id}`, 'Ficha excluída permanentemente.');
-                saveDB();
-            }
-        }
-
-        // --- AUDITORIA ---
-        function logAudit(action, target, details) {
-            const timeStr = new Date().toLocaleString('pt-BR');
-            db.auditoria.unshift({ date: timeStr, action, target, details });
-            if(db.auditoria.length > 100) db.auditoria.pop();
-        }
-
-        function renderAudit() {
-            const tbody = document.getElementById('auditTableBody');
-            tbody.innerHTML = db.auditoria.map(a => `
-                <tr class="border-b border-zinc-800">
-                    <td class="py-2.5 text-zinc-400">${a.date}</td>
-                    <td class="py-2.5 font-bold text-barberGold">${a.action}</td>
-                    <td class="py-2.5 text-zinc-300"><strong>[${a.target}]</strong> ${a.details}</td>
-                </tr>
-            `).join('');
-        }
-
-        function clearAuditLog() {
-            if(confirm("Deseja limpar o log de auditoria?")) {
-                db.auditoria = [];
-                saveDB();
-            }
-        }
-
-        // --- BUSCA GLOBAL ---
-        function openGlobalSearch() {
-            document.getElementById('globalSearchModal').classList.remove('hidden');
-            document.getElementById('globalSearchInput').focus();
-        }
-
-        function closeGlobalSearch() {
-            document.getElementById('globalSearchModal').classList.add('hidden');
-        }
-
-        function runGlobalSearch() {
-            const q = document.getElementById('globalSearchInput').value.toLowerCase();
-            const resultsDiv = document.getElementById('globalSearchResults');
-            if(!q) {
-                resultsDiv.innerHTML = `<p class="text-zinc-500 text-center py-4">Digite para buscar em fichas, serviços e auditoria...</p>`;
+        // ==========================================
+        // FUNCIONALIDADES: 9 & 10. SEGURANÇA E AUDITORIA
+        // ==========================================
+        function salvarPin() {
+            const pinVal = document.getElementById('input-novo-pin').value;
+            if(pinVal && pinVal.length !== 4) {
+                alert("O PIN deve conter exatamente 4 dígitos numéricos.");
                 return;
             }
+            appState.settings.pin = pinVal ? pinVal : null;
+            registrarAuditoria("Configuração alterada", pinVal ? "PIN de segurança ativado" : "PIN desativado");
+            saveState();
+            alert(pinVal ? "PIN configurado com sucesso!" : "PIN removido com sucesso!");
+            document.getElementById('input-novo-pin').value = '';
+            renderSegurancaInfo();
+        }
 
-            const foundFichas = db.fichas.filter(f => f.id.toLowerCase().includes(q) || f.servico.toLowerCase().includes(q) || f.mes.toLowerCase().includes(q));
+        function renderSegurancaInfo() {
+            const container = document.getElementById('status-seguranca-info');
+            if(!container) return;
+
+            const migStatus = appState.migrationInfo ? `Migrado em ${new Date(appState.migrationInfo.migratedAt).toLocaleString()} (${appState.migrationInfo.recordsMigrated} registros de ${appState.migrationInfo.keysFound.length} chaves)` : "Nenhum dado legado detectado ou migração pendente.";
             
-            if(foundFichas.length === 0) {
-                resultsDiv.innerHTML = `<p class="text-zinc-400 text-center py-4">Nenhum resultado encontrado para "${q}".</p>`;
+            container.innerHTML = `
+                • <b>Status de Proteção PIN:</b> ${appState.settings.pin ? 'Ativado 🔒' : 'Desativado 🔓'}<br>
+                • <b>Total de Registros em Banco:</b> ${appState.fichas.length}<br>
+                • <b>Snapshots de Segurança Ativos:</b> ${appState.snapshots.length}<br>
+                • <b>Status da Migração Legada:</b> ${migStatus}
+            `;
+        }
+
+        function renderAuditoria() {
+            const tbody = document.querySelector('#tabela-auditoria tbody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+
+            if(appState.audit.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="empty-state">Nenhum evento registrado na auditoria.</td></tr>`;
                 return;
             }
 
-            resultsDiv.innerHTML = foundFichas.map(f => `
-                <div class="bg-zinc-900/60 p-3 rounded-xl border border-zinc-800 flex justify-between items-center">
-                    <div>
-                        <span class="font-mono font-bold text-barberGold">${f.id}</span> — <span class="text-white">${f.servico}</span>
-                        <p class="text-xs text-zinc-400">Data: ${f.data} | Valor: R$ ${f.valor.toFixed(2)} | Status: ${f.status}</p>
-                    </div>
-                    <button onclick="closeGlobalSearch(); editTicket('${f.id}')" class="bg-zinc-800 hover:bg-zinc-700 text-white px-3 py-1.5 rounded-lg text-xs">Ver / Editar</button>
-                </div>
-            `).join('');
+            appState.audit.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${item.data.split('-').reverse().join('/')} às ${item.hora}</td>
+                    <td><span class="badge badge-gold">${item.acao}</span></td>
+                    <td>${item.descricao}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Modal Controls
+        function abrirModal(titulo, htmlConteudo) {
+            document.getElementById('modal-titulo').textContent = titulo;
+            document.getElementById('modal-corpo').innerHTML = htmlConteudo;
+            document.getElementById('modal-generico').classList.add('active');
+        }
+
+        function fecharModal() {
+            document.getElementById('modal-generico').classList.remove('active');
+        }
+
+        function abrirModalPin() {
+            document.getElementById('input-pin-confirmacao').value = '';
+            document.getElementById('modal-pin').classList.add('active');
+        }
+
+        function fecharModalPin() {
+            document.getElementById('modal-pin').classList.remove('active');
+            acaoPendentePin = null;
+        }
+
+        function executarAcaoProtegida() {
+            const pinDigitado = document.getElementById('input-pin-confirmacao').value;
+            if(pinDigitado === appState.settings.pin) {
+                fecharModalPin();
+                if(typeof acaoPendentePin === 'function') {
+                    acaoPendentePin();
+                }
+            } else {
+                alert("PIN incorreto!");
+            }
+        }
+
+        function atualizarInterfaceCompleta() {
+            popularSelectServicos();
+            atualizarIndicadoresHoje();
+            renderHistorico();
+            renderServicos();
+            renderAnalises();
+            renderFechamentoSemanal();
+            renderFechamentoMensal();
+            renderSnapshots();
+            renderSegurancaInfo();
+            renderAuditoria();
         }
     </script>
 </body>
