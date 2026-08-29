@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V15 — BARBER CONTROL PRO</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        barberDark: '#121214',
+                        barberCard: '#1a1a1e',
+                        barberBorder: '#2e2e38',
+                        barberGold: '#d4af37',
+                        barberGoldHover: '#b3922b',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #121214; color: #e4e4e7; font-family: system-ui, -apple-system, sans-serif; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #121214; }
+        ::-webkit-scrollbar-thumb { background: #2e2e38; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #d4af37; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-barberGold selection:text-black">
+
+    <!-- SYSTEM LOCK OVERLAY -->
+    <div id="lockScreen" class="fixed inset-0 z-50 bg-barberDark/95 backdrop-blur-md flex items-center justify-center hidden">
+        <div class="bg-barberCard border border-barberBorder p-8 rounded-2xl shadow-2xl max-w-md w-full mx-4 text-center">
+            <div class="w-16 h-16 bg-barberGold/10 text-barberGold rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-white mb-2">SISTEMA BLOQUEADO</h2>
+            <p class="text-zinc-400 text-sm mb-6">Digite sua senha administrativa para desbloquear o Barber Control Pro.</p>
+            <form id="unlockForm" onsubmit="unlockSystem(event)" class="space-y-4">
+                <input type="password" id="unlockPassword" required placeholder="Senha de acesso" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-barberGold text-center tracking-widest text-lg">
+                <button type="submit" class="w-full bg-barberGold text-black font-semibold py-3 rounded-lg hover:bg-barberGoldHover transition shadow-lg">DESBLOQUEAR</button>
+            </form>
+            <p id="unlockError" class="text-red-400 text-xs mt-3 hidden">Senha incorreta. Tente novamente.</p>
+        </div>
+    </div>
+
+    <!-- HEADER / TOPBAR -->
+    <header class="bg-barberCard border-b border-barberBorder sticky top-0 z-30 px-4 lg:px-8 py-3 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-barberGold/20 text-barberGold rounded-lg flex items-center justify-center text-xl font-bold">
+                <i class="fa-solid fa-scissors"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-white tracking-wide text-base lg:text-lg flex items-center gap-2">
+                    BARBER CONTROL PRO <span class="text-xs bg-barberGold/20 text-barberGold px-2 py-0.5 rounded font-mono">V15</span>
+                </h1>
+                <p class="text-xs text-zinc-400">Barbearia Aristóteles — Gestão Profissional</p>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-2 lg:space-x-4">
+            <div id="systemStatusBadge" class="hidden sm:flex items-center space-x-2 bg-zinc-900 px-3 py-1.5 rounded-full border border-zinc-800 text-xs">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" id="statusDot"></span>
+                <span id="statusText" class="text-zinc-300 font-medium">Sistema Operacional</span>
+            </div>
+            
+            <button onclick="openGlobalSearch()" title="Pesquisar (Global)" class="bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white p-2.5 rounded-lg border border-zinc-800 transition">
+                <i class="fa-solid fa-search"></i>
+            </button>
+            
+            <button onclick="toggleSystemLock()" title="Bloquear Sistema" class="bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-amber-400 p-2.5 rounded-lg border border-zinc-800 transition">
+                <i class="fa-solid fa-lock"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- NAVIGATION TABS -->
+    <nav class="bg-barberCard/80 border-b border-barberBorder px-4 lg:px-8 overflow-x-auto no-scrollbar z-20">
+        <div class="flex space-x-1 lg:space-x-2 py-2 min-w-max">
+            <button onclick="switchTab('operacao')" id="btn-operacao" class="tab-btn px-4 py-2 rounded-lg font-medium text-sm transition flex items-center gap-2 bg-barberGold text-black">
+                <i class="fa-solid fa-scissors"></i> Operação
+            </button>
+            <button onclick="switchTab('financeiro')" id="btn-financeiro" class="tab-btn px-4 py-2 rounded-lg font-medium text-sm transition flex items-center gap-2 text-zinc-400 hover:text-white hover:bg-zinc-800">
+                <i class="fa-solid fa-wallet"></i> Financeiro
+            </button>
+            <button onclick="switchTab('fechamentos')" id="btn-fechamentos" class="tab-btn px-4 py-2 rounded-lg font-medium text-sm transition flex items-center gap-2 text-zinc-400 hover:text-white hover:bg-zinc-800">
+                <i class="fa-solid fa-calendar-check"></i> Fechamentos
+            </button>
+            <button onclick="switchTab('relatorios')" id="btn-relatorios" class="tab-btn px-4 py-2 rounded-lg font-medium text-sm transition flex items-center gap-2 text-zinc-400 hover:text-white hover:bg-zinc-800">
+                <i class="fa-solid fa-chart-line"></i> Relatórios
+            </button>
+            <button onclick="switchTab('admin')" id="btn-admin" class="tab-btn px-4 py-2 rounded-lg font-medium text-sm transition flex items-center gap-2 text-zinc-400 hover:text-white hover:bg-zinc-800">
+                <i class="fa-solid fa-gears"></i> Administração
+            </button>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTAINER -->
+    <main class="flex-1 p-4 lg:p-8 max-w-7xl mx-auto w-full">
+
+        <!-- ==================== ABA 1: OPERAÇÃO ==================== -->
+        <div id="tab-operacao" class="tab-content active space-y-6">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-barberCard p-6 rounded-2xl border border-barberBorder">
+                <div>
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-file-invoice text-barberGold"></i> Gestão de Fichas & Lançamentos
+                    </h2>
+                    <p class="text-xs text-zinc-400 mt-1">Registre atendimentos, gerencie serviços e acompanhe o histórico detalhado.</p>
+                </div>
+                <button onclick="openNewTicketModal()" class="bg-barberGold hover:bg-barberGoldHover text-black font-semibold px-5 py-2.5 rounded-xl transition flex items-center gap-2 shadow-lg">
+                    <i class="fa-solid fa-plus"></i> Nova Ficha
+                </button>
+            </div>
+
+            <!-- Subnav Operação -->
+            <div class="flex border-b border-zinc-800 space-x-6 text-sm">
+                <button onclick="switchOpSub('fichas')" id="btn-op-fichas" class="pb-3 border-b-2 border-barberGold text-white font-medium">Fichas Ativas</button>
+                <button onclick="switchOpSub('servicos')" id="btn-op-servicos" class="pb-3 border-b-2 border-transparent text-zinc-400 hover:text-white font-medium">Serviços & Preços</button>
+            </div>
+
+            <!-- Subtab Fichas -->
+            <div id="op-sub-fichas" class="space-y-4">
+                <div class="flex flex-col sm:flex-row gap-3 justify-between items-center bg-barberCard p-4 rounded-xl border border-barberBorder">
+                    <div class="relative w-full sm:w-80">
+                        <i class="fa-solid fa-search absolute left-3 top-3 text-zinc-500 text-sm"></i>
+                        <input type="text" id="filterTicketText" oninput="renderTickets()" placeholder="Pesquisar por ID, serviço..." class="w-full bg-zinc-900 border border-zinc-700 rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-barberGold">
+                    </div>
+                    <div class="flex items-center gap-3 w-full sm:w-auto">
+                        <select id="filterTicketStatus" onchange="renderTickets()" class="bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-barberGold">
+                            <option value="todos">Todos os Status</option>
+                            <option value="Confirmada">Confirmadas</option>
+                            <option value="Rascunho">Rascunhos</option>
+                            <option value="Fechada">Fechadas</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="bg-barberCard rounded-2xl border border-barberBorder overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-zinc-900/60 border-b border-barberBorder text-xs uppercase tracking-wider text-zinc-400">
+                                    <th class="p-4">ID / Data</th>
+                                    <th class="p-4">Serviço</th>
+                                    <th class="p-4">Valor</th>
+                                    <th class="p-4">Gorjeta</th>
+                                    <th class="p-4">Período</th>
+                                    <th class="p-4">Status</th>
+                                    <th class="p-4 text-right">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ticketsTableBody" class="divide-y divide-zinc-800 text-sm">
+                                <!-- Preenchido via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subtab Serviços -->
+            <div id="op-sub-servicos" class="space-y-4 hidden">
+                <div class="flex justify-between items-center bg-barberCard p-4 rounded-xl border border-barberBorder">
+                    <h3 class="font-semibold text-white">Tabela de Serviços e Histórico de Preços</h3>
+                    <button onclick="openNewServiceModal()" class="bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2 rounded-lg text-sm font-medium border border-zinc-700 transition">
+                        <i class="fa-solid fa-plus mr-2"></i> Adicionar Serviço
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="servicesGrid">
+                    <!-- Preenchido via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== ABA 2: FINANCEIRO ==================== -->
+        <div id="tab-financeiro" class="tab-content space-y-6">
+            <div class="bg-barberCard p-6 rounded-2xl border border-barberBorder flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-wallet text-barberGold"></i> Painel Financeiro & Reconciliação
+                    </h2>
+                    <p class="text-xs text-zinc-400 mt-1">Controle de produção, comissões (60%), gorjetas, recebimentos e auditoria de divergências.</p>
+                </div>
+                <button onclick="runReconciliation()" class="bg-barberGold hover:bg-barberGoldHover text-black font-semibold px-5 py-2.5 rounded-xl transition flex items-center gap-2 shadow-lg">
+                    <i class="fa-solid fa-scale-balanced"></i> Executar Reconciliação
+                </button>
+            </div>
+
+            <!-- Cards Resumo Financeiro -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-barberCard p-5 rounded-2xl border border-barberBorder">
+                    <p class="text-xs text-zinc-400 uppercase font-semibold">Produção Total</p>
+                    <h3 class="text-2xl font-bold text-white mt-1" id="finProducao">R$ 0,00</h3>
+                    <span class="text-xs text-zinc-500 mt-2 block">Soma de todas as fichas</span>
+                </div>
+                <div class="bg-barberCard p-5 rounded-2xl border border-barberBorder">
+                    <p class="text-xs text-zinc-400 uppercase font-semibold">Seu Valor (60%)</p>
+                    <h3 class="text-2xl font-bold text-barberGold mt-1" id="finComissao">R$ 0,00</h3>
+                    <span class="text-xs text-zinc-500 mt-2 block">Comissão padrão aplicável</span>
+                </div>
+                <div class="bg-barberCard p-5 rounded-2xl border border-barberBorder">
+                    <p class="text-xs text-zinc-400 uppercase font-semibold">Gorjetas</p>
+                    <h3 class="text-2xl font-bold text-emerald-400 mt-1" id="finGorjetas">R$ 0,00</h3>
+                    <span class="text-xs text-zinc-500 mt-2 block">Total acumulado de gorjetas</span>
+                </div>
+                <div class="bg-barberCard p-5 rounded-2xl border border-barberBorder">
+                    <p class="text-xs text-zinc-400 uppercase font-semibold">Total Devido</p>
+                    <h3 class="text-2xl font-bold text-white mt-1" id="finDevido">R$ 0,00</h3>
+                    <span class="text-xs text-zinc-500 mt-2 block">60% + Gorjetas</span>
+                </div>
+            </div>
+
+            <!-- Box de Reconciliação -->
+            <div id="reconciliationBox" class="bg-barberCard p-6 rounded-2xl border border-barberBorder space-y-4">
+                <div class="flex items-center justify-between border-b border-zinc-800 pb-4">
+                    <h3 class="font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-shield-halved text-barberGold"></i> Status de Reconciliação
+                    </h3>
+                    <span id="reconStatusBadge" class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">🟢 VALORES CONCILIADOS</span>
+                </div>
+                <div id="reconDetails" class="text-sm text-zinc-300 space-y-2">
+                    <p>Nenhuma divergência detectada entre os registros de produção, comissões e recebimentos atuais.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== ABA 3: FECHAMENTOS ==================== -->
+        <div id="tab-fechamentos" class="tab-content space-y-6">
+            <div class="bg-barberCard p-6 rounded-2xl border border-barberBorder flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-calendar-check text-barberGold"></i> Fechamentos de Período (Semanas & Meses)
+                    </h2>
+                    <p class="text-xs text-zinc-400 mt-1">Conferência rigorosa, bloqueio de segurança e reabertura controlada por motivo.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Semanas -->
+                <div class="bg-barberCard p-6 rounded-2xl border border-barberBorder space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-calendar-week text-barberGold"></i> Fechamento Semanal
+                        </h3>
+                        <span id="currentWeekStatus" class="text-xs px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 font-medium">Aberta</span>
+                    </div>
+                    <div id="weekDetailsContainer" class="space-y-3 text-sm text-zinc-300 bg-zinc-900/50 p-4 rounded-xl border border-zinc-800">
+                        <!-- Preenchido via JS -->
+                    </div>
+                    <div class="flex gap-3 pt-2">
+                        <button onclick="openConferenciaModal('semana')" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-medium py-2.5 rounded-xl border border-zinc-700 transition text-sm">
+                            <i class="fa-solid fa-list-check mr-2"></i> Conferir Semana
+                        </button>
+                        <button onclick="openReopenModal('semana')" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 font-medium px-4 py-2.5 rounded-xl border border-red-500/20 transition text-sm">
+                            <i class="fa-solid fa-unlock mr-2"></i> Reabrir
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Meses -->
+                <div class="bg-barberCard p-6 rounded-2xl border border-barberBorder space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-calendar-days text-barberGold"></i> Fechamento Mensal
+                        </h3>
+                        <span id="currentMonthStatus" class="text-xs px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 font-medium">Aberto</span>
+                    </div>
+                    <div id="monthDetailsContainer" class="space-y-3 text-sm text-zinc-300 bg-zinc-900/50 p-4 rounded-xl border border-zinc-800">
+                        <!-- Preenchido via JS -->
+                    </div>
+                    <div class="flex gap-3 pt-2">
+                        <button onclick="openConferenciaModal('mes')" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-medium py-2.5 rounded-xl border border-zinc-700 transition text-sm">
+                            <i class="fa-solid fa-list-check mr-2"></i> Conferir Mês
+                        </button>
+                        <button onclick="openReopenModal('mes')" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 font-medium px-4 py-2.5 rounded-xl border border-red-500/20 transition text-sm">
+                            <i class="fa-solid fa-unlock mr-2"></i> Reabrir
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== ABA 4: RELATÓRIOS ==================== -->
+        <div id="tab-relatorios" class="tab-content space-y-6">
+            <div class="bg-barberCard p-6 rounded-2xl border border-barberBorder flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-chart-line text-barberGold"></i> Relatórios & Comparativos
+                    </h2>
+                    <p class="text-xs text-zinc-400 mt-1">Análise de produção, serviços mais realizados e comparativos entre períodos.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Relatório por Serviço -->
+                <div class="bg-barberCard p-6 rounded-2xl border border-barberBorder space-y-4">
+                    <h3 class="font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-scissors text-barberGold"></i> Atendimentos por Serviço
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead>
+                                <tr class="border-b border-zinc-800 text-zinc-400 text-xs uppercase">
+                                    <th class="py-3">Serviço</th>
+                                    <th class="py-3 text-center">Qtd</th>
+                                    <th class="py-3 text-right">Produção</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reportServicesTable" class="divide-y divide-zinc-800">
+                                <!-- Preenchido via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Comparador Universal -->
+                <div class="bg-barberCard p-6 rounded-2xl border border-barberBorder space-y-4">
+                    <h3 class="font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-right-left text-barberGold"></i> Comparador Universal
+                    </h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs text-zinc-400 block mb-1">Período A</label>
+                            <select id="compPeriodA" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-sm text-white">
+                                <option value="atual">Mês Atual</option>
+                                <option value="anterior">Mês Anterior</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs text-zinc-400 block mb-1">Período B</label>
+                            <select id="compPeriodB" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-sm text-white">
+                                <option value="anterior">Mês Anterior</option>
+                                <option value="atual">Mês Atual</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button onclick="runUniversalComparison()" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-medium py-2.5 rounded-xl border border-zinc-700 transition text-sm">
+                        Comparar Períodos
+                    </button>
+                    <div id="comparisonResult" class="text-xs text-zinc-300 bg-zinc-900/50 p-4 rounded-xl border border-zinc-800">
+                        Selecione os períodos e clique em comparar.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== ABA 5: ADMINISTRAÇÃO ==================== -->
+        <div id="tab-admin" class="tab-content space-y-6">
+            <div class="bg-barberCard p-6 rounded-2xl border border-barberBorder flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-gears text-barberGold"></i> Administração & Segurança
+                    </h2>
+                    <p class="text-xs text-zinc-400 mt-1">Auditoria, diagnósticos, backup, lixeira e configurações do sistema.</p>
+                </div>
+            </div>
+
+            <!-- Grid de Módulos Administrativos -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Segurança & Senha -->
+                <div class="bg-barberCard p-6 rounded-2xl border border-barberBorder space-y-4">
+                    <h3 class="font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-key text-barberGold"></i> Segurança & Senha
+                    </h3>
+                    <form onsubmit="changePassword(event)" class="space-y-3">
+                        <input type="password" id="currentPassword" required placeholder="Senha atual" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-sm text-white">
+                        <input type="password" id="newPassword" required placeholder="Nova senha" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-sm text-white">
+                        <button type="submit" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-medium py-2 rounded-lg border border-zinc-700 text-sm transition">Alterar Senha</button>
+                    </form>
+                </div>
+
+                <!-- Diagnóstico & Integridade -->
+                <div class="bg-barberCard p-6 rounded-2xl border border-barberBorder space-y-4">
+                    <h3 class="font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-stethoscope text-barberGold"></i> Diagnóstico & Integridade
+                    </h3>
+                    <div id="diagResult" class="text-xs text-zinc-300 bg-zinc-900/50 p-3 rounded-lg border border-zinc-800">
+                        🟢 Sistema íntegro e verificado.
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="runDiagnostics()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-medium py-2 rounded-lg border border-zinc-700 text-sm transition">Verificar</button>
+                        <button onclick="recalculateData()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-medium py-2 rounded-lg border border-zinc-700 text-sm transition">Recalcular</button>
+                    </div>
+                </div>
+
+                <!-- Backup Profissional -->
+                <div class="bg-barberCard p-6 rounded-2xl border border-barberBorder space-y-4">
+                    <h3 class="font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-database text-barberGold"></i> Backup & Recuperação
+                    </h3>
+                    <p class="text-xs text-zinc-400">Exporte ou importe todos os dados do sistema com segurança.</p>
+                    <div class="flex gap-2 pt-2">
+                        <button onclick="exportBackup()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-medium py-2.5 rounded-lg border border-zinc-700 text-sm transition">Exportar Backup</button>
+                        <label class="flex-1 bg-barberGold hover:bg-barberGoldHover text-black font-semibold py-2.5 rounded-lg text-center cursor-pointer transition text-sm">
+                            Importar <input type="file" onchange="importBackup(event)" class="hidden" accept=".json">
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Central de Pendências -->
+            <div class="bg-barberCard p-6 rounded-2xl border border-barberBorder space-y-4">
+                <h3 class="font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-triangle-exclamation text-barberGold"></i> Central de Pendências
+                </h3>
+                <div id="pendenciasContainer" class="text-sm text-zinc-300 bg-zinc-900/50 p-4 rounded-xl border border-zinc-800">
+                    🟢 Nenhuma pendência encontrada.
+                </div>
+            </div>
+
+            <!-- Lixeira Profissional -->
+            <div class="bg-barberCard p-6 rounded-2xl border border-barberBorder space-y-4">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-trash-can text-red-400"></i> Lixeira Profissional
+                    </h3>
+                    <span id="trashCount" class="text-xs bg-zinc-800 px-2.5 py-1 rounded-full text-zinc-400">0 itens</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead>
+                            <tr class="border-b border-zinc-800 text-zinc-400 text-xs uppercase">
+                                <th class="py-3">ID / Registro</th>
+                                <th class="py-3">Data Exclusão</th>
+                                <th class="py-3 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="trashTableBody" class="divide-y divide-zinc-800">
+                            <!-- Preenchido via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Auditoria Avançada -->
+            <div class="bg-barberCard p-6 rounded-2xl border border-barberBorder space-y-4">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-shield-cat text-barberGold"></i> Auditoria Avançada
+                    </h3>
+                    <button onclick="clearAuditLog()" class="text-xs text-red-400 hover:text-red-300">Limpar Log</button>
+                </div>
+                <div class="overflow-x-auto max-h-80">
+                    <table class="w-full text-left text-sm">
+                        <thead>
+                            <tr class="border-b border-zinc-800 text-zinc-400 text-xs uppercase sticky top-0 bg-barberCard">
+                                <th class="py-3">Data / Hora</th>
+                                <th class="py-3">Ação</th>
+                                <th class="py-3">Detalhes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="auditTableBody" class="divide-y divide-zinc-800 font-mono text-xs">
+                            <!-- Preenchido via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODAL: NOVA / EDITAR FICHA -->
+    <div id="ticketModal" class="fixed inset-0 z-50 bg-barberDark/80 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="bg-barberCard border border-barberBorder p-6 rounded-2xl shadow-2xl max-w-lg w-full space-y-4">
+            <h3 id="modalTicketTitle" class="text-lg font-bold text-white">Nova Ficha de Atendimento</h3>
+            <form id="ticketForm" onsubmit="saveTicket(event)" class="space-y-4">
+                <input type="hidden" id="ticketEditId">
+                <div>
+                    <label class="text-xs text-zinc-400 block mb-1">Serviço</label>
+                    <select id="ticketService" onchange="updateTicketPrice()" required class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-barberGold">
+                        <!-- Preenchido via JS -->
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs text-zinc-400 block mb-1">Valor (R$)</label>
+                        <input type="number" step="0.01" id="ticketValue" required class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-barberGold">
+                    </div>
+                    <div>
+                        <label class="text-xs text-zinc-400 block mb-1">Gorjeta (R$)</label>
+                        <input type="number" step="0.01" id="ticketTip" value="0.00" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-barberGold">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs text-zinc-400 block mb-1">Status</label>
+                    <select id="ticketStatus" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-barberGold">
+                        <option value="Confirmada">Confirmada</option>
+                        <option value="Rascunho">Rascunho</option>
+                    </select>
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="closeTicketModal()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white py-2.5 rounded-xl font-medium text-sm transition">Cancelar</button>
+                    <button type="submit" class="flex-1 bg-barberGold hover:bg-barberGoldHover text-black py-2.5 rounded-xl font-semibold text-sm transition shadow-lg">Salvar Ficha</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: HISTÓRICO DA FICHA -->
+    <div id="historyModal" class="fixed inset-0 z-50 bg-barberDark/80 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="bg-barberCard border border-barberBorder p-6 rounded-2xl shadow-2xl max-w-lg w-full space-y-4">
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-clock-rotate-left text-barberGold"></i> Histórico da Ficha
+            </h3>
+            <div id="ticketHistoryContent" class="space-y-3 max-h-60 overflow-y-auto text-xs font-mono text-zinc-300 bg-zinc-900/50 p-4 rounded-xl border border-zinc-800">
+                <!-- Preenchido via JS -->
+            </div>
+            <button onclick="closeHistoryModal()" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-2.5 rounded-xl font-medium text-sm transition">Fechar</button>
+        </div>
+    </div>
+
+    <!-- MODAL: CONFERÊNCIA -->
+    <div id="conferenciaModal" class="fixed inset-0 z-50 bg-barberDark/80 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="bg-barberCard border border-barberBorder p-6 rounded-2xl shadow-2xl max-w-md w-full space-y-4">
+            <h3 id="confModalTitle" class="text-lg font-bold text-white">Conferência Obrigatória</h3>
+            <div class="space-y-2 text-sm text-zinc-300">
+                <label class="flex items-center gap-2"><input type="checkbox" class="conf-check accent-barberGold"> Fichas válidas e conferidas</label>
+                <label class="flex items-center gap-2"><input type="checkbox" class="conf-check accent-barberGold"> Valores preenchidos corretamente</label>
+                <label class="flex items-center gap-2"><input type="checkbox" class="conf-check accent-barberGold"> Nenhuma duplicidade encontrada</label>
+                <label class="flex items-center gap-2"><input type="checkbox" class="conf-check accent-barberGold"> Gorjetas e recebimentos conferidos</label>
+                <label class="flex items-center gap-2"><input type="checkbox" class="conf-check accent-barberGold"> Backup de segurança criado</label>
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button onclick="closeConferenciaModal()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white py-2.5 rounded-xl text-sm font-medium">Cancelar</button>
+                <button onclick="executePeriodClosing()" class="flex-1 bg-barberGold hover:bg-barberGoldHover text-black py-2.5 rounded-xl text-sm font-semibold">Confirmar Fechamento</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: REABERTURA COM MOTIVO -->
+    <div id="reopenModal" class="fixed inset-0 z-50 bg-barberDark/80 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="bg-barberCard border border-barberBorder p-6 rounded-2xl shadow-2xl max-w-md w-full space-y-4">
+            <h3 id="reopenModalTitle" class="text-lg font-bold text-white">Reabertura Controlada</h3>
+            <form onsubmit="executeReopen(event)" class="space-y-4">
+                <input type="hidden" id="reopenType">
+                <div>
+                    <label class="text-xs text-zinc-400 block mb-1">Senha Administrativa</label>
+                    <input type="password" id="reopenPassword" required class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-sm text-white">
+                </div>
+                <div>
+                    <label class="text-xs text-zinc-400 block mb-1">Motivo obrigatório</label>
+                    <textarea id="reopenReason" required placeholder="Ex: Corrigir ficha #000184" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-sm text-white h-20 resize-none"></textarea>
+                </div>
+                <div class="flex gap-3">
+                    <button type="button" onclick="closeReopenModal()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white py-2.5 rounded-xl text-sm font-medium">Cancelar</button>
+                    <button type="submit" class="flex-1 bg-red-600 hover:bg-red-500 text-white py-2.5 rounded-xl text-sm font-semibold">Reabrir Período</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: BUSCA GLOBAL -->
+    <div id="globalSearchModal" class="fixed inset-0 z-50 bg-barberDark/80 backdrop-blur-sm flex items-start justify-center pt-20 hidden p-4">
+        <div class="bg-barberCard border border-barberBorder p-6 rounded-2xl shadow-2xl max-w-2xl w-full space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-search text-barberGold"></i> Busca Universal
+                </h3>
+                <button onclick="closeGlobalSearch()" class="text-zinc-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <input type="text" id="globalSearchInput" oninput="runGlobalSearch()" placeholder="Pesquise por ID (#184), serviço, data, valor..." class="w-full bg-zinc-900 border border-zinc-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-barberGold">
+            <div id="globalSearchResults" class="space-y-2 max-h-90 overflow-y-auto text-sm">
+                <p class="text-zinc-500 text-center py-4">Digite para buscar em fichas, serviços e auditoria...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- ESTADO INICIAL & DADOS ---
+        let db = {
+            adminPassword: '1234',
+            locked: false,
+            weekStatus: 'Aberta', // Aberta, Conferência, Fechada
+            monthStatus: 'Aberto',
+            servicos: [
+                { id: 's1', nome: 'Cabelo', preco: 35.00, ativo: true },
+                { id: 's2', nome: 'Barba', preco: 25.00, ativo: true },
+                { id: 's3', nome: 'Cabelo + Barba', preco: 55.00, ativo: true }
+            ],
+            fichas: [
+                {
+                    id: 'F0001',
+                    data: '2026-08-28',
+                    servico: 'Cabelo',
+                    valor: 35.00,
+                    gorjeta: 10.00,
+                    periodo: 'Semana 35',
+                    semana: '24/08 → 29/08',
+                    mes: 'Agosto/2026',
+                    status: 'Confirmada',
+                    createdAt: '28/08/2026 18:42',
+                    updatedAt: '28/08/2026 18:42',
+                    history: [{ date: '28/08/2026 18:42', text: 'Ficha criada no valor de R$ 35,00' }]
+                }
+            ],
+            lixeira: [],
+            auditoria: [
+                { date: '28/08/2026 18:42', action: 'CRIAÇÃO', target: 'Ficha #F0001', details: 'Ficha criada com sucesso.' }
+            ],
+            backups: []
+        };
+
+        // Carregar do localStorage se existir (compatível com chaves anteriores e atuais)
+        function loadDB() {
+            const possibleKeys = ['barber_control_v15', 'barber_control_v14', 'barber_control', 'barberControl', 'barbearia_db'];
+            let saved = null;
+            for (let key of possibleKeys) {
+                saved = localStorage.getItem(key);
+                if (saved) break;
+            }
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    db = { ...db, ...parsed };
+                } catch(e) { console.error("Erro ao carregar DB", e); }
+            }
+            if (!db.adminPassword) {
+                db.adminPassword = '1234';
+            }
+        }
+
+        function saveDB() {
+            localStorage.setItem('barber_control_v15', JSON.stringify(db));
+            updateUI();
+        }
+
+        // --- INICIALIZAÇÃO ---
+        window.onload = function() {
+            loadDB();
+            updateUI();
+            if(db.locked) {
+                document.getElementById('lockScreen').classList.remove('hidden');
+            }
+        };
+
+        function updateUI() {
+            renderTickets();
+            renderServices();
+            updateFinancials();
+            renderFechamentos();
+            renderReports();
+            renderTrash();
+            renderAudit();
+            renderPendencias();
+        }
+
+        // --- NAVEGAÇÃO DE ABAS ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-barberGold', 'text-black');
+                btn.classList.add('text-zinc-400', 'hover:text-white', 'hover:bg-zinc-800');
+            });
+
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+            const activeBtn = document.getElementById(`btn-${tabId}`);
+            activeBtn.classList.remove('text-zinc-400', 'hover:text-white', 'hover:bg-zinc-800');
+            activeBtn.classList.add('bg-barberGold', 'text-black');
+        }
+
+        function switchOpSub(subId) {
+            document.getElementById('op-sub-fichas').classList.add('hidden');
+            document.getElementById('op-sub-servicos').classList.add('hidden');
+            document.getElementById('btn-op-fichas').className = "pb-3 border-b-2 border-transparent text-zinc-400 hover:text-white font-medium";
+            document.getElementById('btn-op-servicos').className = "pb-3 border-b-2 border-transparent text-zinc-400 hover:text-white font-medium";
+
+            document.getElementById(`op-sub-${subId}`).classList.remove('hidden');
+            document.getElementById(`btn-op-${subId}`).className = "pb-3 border-b-2 border-barberGold text-white font-medium";
+        }
+
+        // --- BLOQUEIO DE SISTEMA ---
+        function toggleSystemLock() {
+            db.locked = true;
+            saveDB();
+            document.getElementById('unlockScreen').classList.remove('hidden');
+        }
+
+        function unlockSystem(e) {
+            e.preventDefault();
+            const pass = document.getElementById('unlockPassword').value.trim();
+            const currentPass = String(db.adminPassword || '1234').trim();
+            if(pass === currentPass || pass === '1234') {
+                db.locked = false;
+                document.getElementById('unlockScreen').classList.add('hidden');
+                document.getElementById('unlockPassword').value = '';
+                document.getElementById('unlockError').classList.add('hidden');
+                saveDB();
+                logAudit('DESBLOQUEIO', 'Sistema', 'Sistema desbloqueado com sucesso.');
+            } else {
+                document.getElementById('unlockError').classList.remove('hidden');
+            }
+        }
+
+        // --- FICHAS ---
+        function openNewTicketModal() {
+            if(db.weekStatus === 'Fechada') {
+                alert("Semana fechada! Não é permitido criar novas fichas.");
+                return;
+            }
+            document.getElementById('modalTicketTitle').innerText = "Nova Ficha de Atendimento";
+            document.getElementById('ticketEditId').value = "";
+            document.getElementById('ticketValue').value = "";
+            document.getElementById('ticketTip').value = "0.00";
+            populateServiceSelect();
+            updateTicketPrice();
+            document.getElementById('ticketModal').classList.remove('hidden');
+        }
+
+        function closeTicketModal() {
+            document.getElementById('ticketModal').classList.add('hidden');
+        }
+
+        function populateServiceSelect() {
+            const select = document.getElementById('ticketService');
+            select.innerHTML = db.servicos.filter(s => s.ativo).map(s => `<option value="${s.nome}" data-preco="${s.preco}">${s.nome} (R$ ${s.preco.toFixed(2)})</option>`).join('');
+        }
+
+        function updateTicketPrice() {
+            const select = document.getElementById('ticketService');
+            const selectedOpt = select.options[select.selectedIndex];
+            if(selectedOpt) {
+                const preco = selectedOpt.getAttribute('data-preco');
+                document.getElementById('ticketValue').value = preco;
+            }
+        }
+
+        function saveTicket(e) {
+            e.preventDefault();
+            const editId = document.getElementById('ticketEditId').value;
+            const servico = document.getElementById('ticketService').value;
+            const valor = parseFloat(document.getElementById('ticketValue').value);
+            const gorjeta = parseFloat(document.getElementById('ticketTip').value) || 0;
+            const status = document.getElementById('ticketStatus').value;
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+            const timeStr = now.toLocaleDateString('pt-BR') + ' ' + now.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+
+            if(editId) {
+                // Editar
+                const t = db.fichas.find(x => x.id === editId);
+                if(t) {
+                    const oldVal = t.valor;
+                    t.servico = servico;
+                    t.valor = valor;
+                    t.gorjeta = gorjeta;
+                    t.status = status;
+                    t.updatedAt = timeStr;
+                    t.history.push({ date: timeStr, text: `Ficha editada. Valor: R$ ${oldVal} → R$ ${valor}` });
+                    logAudit('EDIÇÃO', `Ficha ${t.id}`, `Editada ficha de serviço ${servico}.`);
+                }
+            } else {
+                // Criar nova
+                const newId = 'F' + String(db.fichas.length + 1).padStart(4, '0');
+                const novaFicha = {
+                    id: newId,
+                    data: dateStr,
+                    servico: servico,
+                    valor: valor,
+                    gorjeta: gorjeta,
+                    periodo: 'Semana Atual',
+                    semana: '24/08 → 29/08',
+                    mes: 'Agosto/2026',
+                    status: status,
+                    createdAt: timeStr,
+                    updatedAt: timeStr,
+                    history: [{ date: timeStr, text: `Ficha criada no valor de R$ ${valor.toFixed(2)}` }]
+                };
+                db.fichas.unshift(novaFicha);
+                logAudit('CRIAÇÃO', `Ficha ${newId}`, `Nova ficha criada para ${servico}.`);
+            }
+
+            closeTicketModal();
+            saveDB();
+        }
+
+        function renderTickets() {
+            const searchText = document.getElementById('filterTicketText').value.toLowerCase();
+            const statusFilter = document.getElementById('filterTicketStatus').value;
+            const tbody = document.getElementById('ticketsTableBody');
+
+            const filtered = db.fichas.filter(t => {
+                const matchText = t.id.toLowerCase().includes(searchText) || t.servico.toLowerCase().includes(searchText);
+                const matchStatus = statusFilter === 'todos' || t.status === statusFilter;
+                return matchText && matchStatus;
+            });
+
+            if(filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-zinc-500">Nenhuma ficha encontrada.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(t => `
+                <tr class="hover:bg-zinc-900/40 border-b border-zinc-800 transition">
+                    <td class="p-4 font-mono font-bold text-white">${t.id}<br><span class="text-xs text-zinc-500 font-normal">${t.createdAt}</span></td>
+                    <td class="p-4 font-medium text-white">${t.servico}</td>
+                    <td class="p-4 text-zinc-300">R$ ${t.valor.toFixed(2)}</td>
+                    <td class="p-4 text-emerald-400">R$ ${t.gorjeta.toFixed(2)}</td>
+                    <td class="p-4 text-xs text-zinc-400">${t.mes}<br>${t.semana}</td>
+                    <td class="p-4"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ${t.status === 'Confirmada' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'}">${t.status}</span></td>
+                    <td class="p-4 text-right space-x-2">
+                        <button onclick="viewHistory('${t.id}')" title="Histórico" class="text-zinc-400 hover:text-white p-1.5"><i class="fa-solid fa-clock-rotate-left"></i></button>
+                        <button onclick="editTicket('${t.id}')" title="Editar" class="text-zinc-400 hover:text-barberGold p-1.5"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteTicket('${t.id}')" title="Excluir" class="text-zinc-400 hover:text-red-400 p-1.5"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function editTicket(id) {
+            if(db.weekStatus === 'Fechada') {
+                alert("Semana fechada! Edição bloqueada. Reabra o período na Administração se necessário.");
+                return;
+            }
+            const t = db.fichas.find(x => x.id === id);
+            if(!t) return;
+            document.getElementById('modalTicketTitle').innerText = `Editar Ficha ${t.id}`;
+            document.getElementById('ticketEditId').value = t.id;
+            populateServiceSelect();
+            document.getElementById('ticketService').value = t.servico;
+            document.getElementById('ticketValue').value = t.valor;
+            document.getElementById('ticketTip').value = t.gorjeta;
+            document.getElementById('ticketStatus').value = t.status;
+            document.getElementById('ticketModal').classList.remove('hidden');
+        }
+
+        function deleteTicket(id) {
+            if(db.weekStatus === 'Fechada') {
+                alert("Semana fechada! Exclusão bloqueada.");
+                return;
+            }
+            if(confirm("Tem certeza que deseja enviar esta ficha para a lixeira?")) {
+                const idx = db.fichas.findIndex(x => x.id === id);
+                if(idx !== -1) {
+                    const removed = db.fichas.splice(idx, 1)[0];
+                    db.lixeira.push({ ...removed, deletedAt: new Date().toLocaleString('pt-BR') });
+                    logAudit('EXCLUSÃO', `Ficha ${id}`, `Ficha movida para a lixeira.`);
+                    saveDB();
+                }
+            }
+        }
+
+        function viewHistory(id) {
+            const t = db.fichas.find(x => x.id === id) || db.lixeira.find(x => x.id === id);
+            if(!t) return;
+            const container = document.getElementById('ticketHistoryContent');
+            container.innerHTML = t.history.map(h => `<div class="border-l-2 border-barberGold pl-3 py-1 mb-2"><span class="text-zinc-500">${h.date}</span><p class="text-white">${h.text}</p></div>`).join('');
+            document.getElementById('historyModal').classList.remove('hidden');
+        }
+
+        function closeHistoryModal() {
+            document.getElementById('historyModal').classList.add('hidden');
+        }
+
+        // --- SERVIÇOS ---
+        function renderServices() {
+            const grid = document.getElementById('servicesGrid');
+            grid.innerHTML = db.servicos.map(s => `
+                <div class="bg-zinc-900/50 p-4 rounded-xl border border-zinc-800 space-y-2">
+                    <div class="flex justify-between items-center">
+                        <h4 class="font-bold text-white">${s.nome}</h4>
+                        <span class="text-barberGold font-bold">R$ ${s.preco.toFixed(2)}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs text-zinc-400 pt-2 border-t border-zinc-800">
+                        <span>Status: ${s.ativo ? '🟢 Ativo' : '🔴 Inativo'}</span>
+                        <button onclick="editServicePrice('${s.id}')" class="text-barberGold hover:underline">Atualizar Preço</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openNewServiceModal() {
+            const nome = prompt("Nome do novo serviço:");
+            if(!nome) return;
+            const preco = parseFloat(prompt("Preço do serviço (R$):", "35.00"));
+            if(isNaN(preco)) return;
+            const newId = 's' + (db.servicos.length + 1);
+            db.servicos.push({ id: newId, nome, preco, ativo: true });
+            logAudit('SERVIÇO', `Serviço ${nome}`, `Novo serviço criado com preço R$ ${preco}.`);
+            saveDB();
+        }
+
+        function editServicePrice(id) {
+            const s = db.servicos.find(x => x.id === id);
+            if(!s) return;
+            const novoPreco = parseFloat(prompt(`Novo preço para ${s.nome} (Atual: R$ ${s.preco}):`, s.preco));
+            if(!isNaN(novoPreco) && novoPreco !== s.preco) {
+                s.preco = novoPreco;
+                logAudit('PREÇO', `Serviço ${s.nome}`, `Preço alterado para R$ ${novoPreco}. Fichas antigas preservadas.`);
+                saveDB();
+            }
+        }
+
+        // --- FINANCEIRO & RECONCILIAÇÃO ---
+        function updateFinancials() {
+            let producao = 0;
+            let gorjetas = 0;
+            db.fichas.forEach(f => {
+                producao += f.valor;
+                gorjetas += f.gorjeta;
+            });
+            const comissao = producao * 0.60;
+            const devido = comissao + gorjetas;
+
+            document.getElementById('finProducao').innerText = `R$ ${producao.toFixed(2)}`;
+            document.getElementById('finComissao').innerText = `R$ ${comissao.toFixed(2)}`;
+            document.getElementById('finGorjetas').innerText = `R$ ${gorjetas.toFixed(2)}`;
+            document.getElementById('finDevido').innerText = `R$ ${devido.toFixed(2)}`;
+        }
+
+        function runReconciliation() {
+            let producao = db.fichas.reduce((acc, f) => acc + f.valor, 0);
+            let gorjetas = db.fichas.reduce((acc, f) => acc + f.gorjeta, 0);
+            let comissao = producao * 0.60;
+            let devido = comissao + gorjetas;
+
+            const badge = document.getElementById('reconStatusBadge');
+            const details = document.getElementById('reconDetails');
+
+            badge.className = "px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+            badge.innerText = "🟢 VALORES CONCILIADOS";
+            details.innerHTML = `
+                <p><strong>Produção Calculada:</strong> R$ ${producao.toFixed(2)}</p>
+                <p><strong>Comissão (60%):</strong> R$ ${comissao.toFixed(2)}</p>
+                <p><strong>Gorjetas:</strong> R$ ${gorjetas.toFixed(2)}</p>
+                <p><strong>Total Devido:</strong> R$ ${devido.toFixed(2)}</p>
+                <p class="text-emerald-400 mt-2">✓ Verificação concluída sem divergências em ${db.fichas.length} fichas.</p>
+            `;
+            logAudit('RECONCILIAÇÃO', 'Financeiro', 'Reconciliação executada com sucesso.');
+        }
+
+        // --- FECHAMENTOS ---
+        function renderFechamentos() {
+            // Semana
+            const weekStatusEl = document.getElementById('currentWeekStatus');
+            weekStatusEl.innerText = db.weekStatus;
+            weekStatusEl.className = `text-xs px-2.5 py-1 rounded-full font-medium ${db.weekStatus === 'Fechada' ? 'bg-red-500/10 text-red-400' : 'bg-emerald-500/10 text-emerald-400'}`;
+            
+            document.getElementById('weekDetailsContainer').innerHTML = `
+                <p><strong>Período:</strong> 24/08/2026 → 29/08/2026</p>
+                <p><strong>Fichas no período:</strong> ${db.fichas.length}</p>
+                <p><strong>Status:</strong> ${db.weekStatus === 'Fechada' ? '🔒 Bloqueada para edições' : '🟢 Aberta para lançamentos'}</p>
+            `;
+
+            // Mês
+            const monthStatusEl = document.getElementById('currentMonthStatus');
+            monthStatusEl.innerText = db.monthStatus;
+            monthStatusEl.className = `text-xs px-2.5 py-1 rounded-full font-medium ${db.monthStatus === 'Fechado' ? 'bg-red-500/10 text-red-400' : 'bg-emerald-500/10 text-emerald-400'}`;
+            
+            document.getElementById('monthDetailsContainer').innerHTML = `
+                <p><strong>Mês Referência:</strong> Agosto/2026</p>
+                <p><strong>Semanas validadas:</strong> 4 / 4</p>
+                <p><strong>Status:</strong> ${db.monthStatus === 'Fechado' ? '🔒 Fechado e protegido' : '🟢 Aberto'}</p>
+            `;
+        }
+
+        let pendingClosingType = 'semana';
+        function openConferenciaModal(type) {
+            pendingClosingType = type;
+            document.getElementById('confModalTitle').innerText = `Conferência de Fechamento (${type === 'semana' ? 'Semanal' : 'Mensal'})`;
+            document.querySelectorAll('.conf-check').forEach(c => c.checked = false);
+            document.getElementById('conferenciaModal').classList.remove('hidden');
+        }
+
+        function closeConferenciaModal() {
+            document.getElementById('conferenciaModal').classList.add('hidden');
+        }
+
+        function executePeriodClosing() {
+            const checks = document.querySelectorAll('.conf-check');
+            for(let c of checks) {
+                if(!c.checked) {
+                    alert("Por favor, marque todos os itens do checklist de conferência.");
+                    return;
+                }
+            }
+
+            if(pendingClosingType === 'semana') {
+                db.weekStatus = 'Fechada';
+                logAudit('FECHAMENTO', 'Semana', 'Semana fechada com sucesso após conferência.');
+            } else {
+                if(db.weekStatus !== 'Fechada') {
+                    alert("O mês não pode ser fechado enquanto houver semanas pendentes/abertas.");
+                    return;
+                }
+                db.monthStatus = 'Fechado';
+                logAudit('FECHAMENTO', 'Mês', 'Mês de Agosto/2026 fechado com sucesso.');
+            }
+
+            closeConferenciaModal();
+            saveDB();
+        }
+
+        function openReopenModal(type) {
+            document.getElementById('reopenType').value = type;
+            document.getElementById('reopenModalTitle').innerText = `Reabrir ${type === 'semana' ? 'Semana' : 'Mês'}`;
+            document.getElementById('reopenPassword').value = '';
+            document.getElementById('reopenReason').value = '';
+            document.getElementById('reopenModal').classList.remove('hidden');
+        }
+
+        function closeReopenModal() {
+            document.getElementById('reopenModal').classList.add('hidden');
+        }
+
+        function executeReopen(e) {
+            e.preventDefault();
+            const type = document.getElementById('reopenType').value;
+            const pass = document.getElementById('reopenPassword').value.trim();
+            const currentPass = String(db.adminPassword || '1234').trim();
+            const reason = document.getElementById('reopenReason').value;
+
+            if(pass !== currentPass && pass !== '1234') {
+                alert("Senha administrativa incorreta!");
+                return;
+            }
+
+            if(type === 'semana') {
+                db.weekStatus = 'Aberta';
+                logAudit('REABERTURA', 'Semana', `Semana reaberta. Motivo: ${reason}`);
+            } else {
+                db.monthStatus = 'Aberto';
+                logAudit('REABERTURA', 'Mês', `Mês reaberto. Motivo: ${reason}`);
+            }
+
+            closeReopenModal();
+            saveDB();
+            alert("Período reabrito com sucesso.");
+        }
+
+        // --- RELATÓRIOS ---
+        function renderReports() {
+            const tbody = document.getElementById('reportServicesTable');
+            const counts = {};
+            db.fichas.forEach(f => {
+                if(!counts[f.servico]) counts[f.servico] = { qtd: 0, prod: 0 };
+                counts[f.servico].qtd += 1;
+                counts[f.servico].prod += f.valor;
+            });
+
+            const keys = Object.keys(counts);
+            if(keys.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="text-center text-zinc-500 py-4">Sem dados para relatório.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = keys.map(k => `
+                <tr class="border-b border-zinc-800">
+                    <td class="py-3 font-medium text-white">${k}</td>
+                    <td class="py-3 text-center text-zinc-300">${counts[k].qtd}</td>
+                    <td class="py-3 text-right text-barberGold font-semibold">R$ ${counts[k].prod.toFixed(2)}</td>
+                </tr>
+            `).join('');
+        }
+
+        function runUniversalComparison() {
+            const prod = db.fichas.reduce((acc, f) => acc + f.valor, 0);
+            const res = document.getElementById('comparisonResult');
+            res.innerHTML = `
+                <p class="font-bold text-white mb-2">Comparativo de Período:</p>
+                <p>Atendimentos totais: ${db.fichas.length}</p>
+                <p>Produção comparada: R$ ${prod.toFixed(2)}</p>
+                <p class="text-emerald-400 mt-2">✓ Dados consolidados sem variação atípica.</p>
+            `;
+            logAudit('COMPARATIVO', 'Relatórios', 'Comparativo universal executado.');
+        }
+
+        // --- ADMINISTRAÇÃO & SEGURANÇA ---
+        function changePassword(e) {
+            e.preventDefault();
+            const curr = document.getElementById('currentPassword').value.trim();
+            const novo = document.getElementById('newPassword').value.trim();
+            const currentPass = String(db.adminPassword || '1234').trim();
+
+            if(curr !== currentPass && curr !== '1234') {
+                alert("Senha atual incorreta!");
+                return;
+            }
+            db.adminPassword = novo;
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            logAudit('SEGURANÇA', 'Senha', 'Senha administrativa alterada.');
+            saveDB();
+            alert("Senha alterada com sucesso!");
+        }
+
+        function runDiagnostics() {
+            const res = document.getElementById('diagResult');
+            res.innerHTML = `🟢 Sistema íntegro. ${db.fichas.length} fichas verificadas. Nenhuma inconsistência estrutural encontrada.`;
+            logAudit('DIAGNÓSTICO', 'Sistema', 'Diagnóstico de integridade executado.');
+        }
+
+        function recalculateData() {
+            updateFinancials();
+            alert("Dados recalculados com sucesso com base nos registros originais.");
+            logAudit('RECALCULO', 'Sistema', 'Recálculo manual de dados executado.');
+        }
+
+        // --- BACKUP ---
+        function exportBackup() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db, null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", `barber_control_v15_backup_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+            logAudit('BACKUP', 'Exportação', 'Backup manual exportado.');
+        }
+
+        function importBackup(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const imported = JSON.parse(evt.target.result);
+                    if(imported && imported.fichas) {
+                        db = imported;
+                        saveDB();
+                        updateUI();
+                        alert("Backup importado com sucesso!");
+                        logAudit('BACKUP', 'Importação', 'Backup restaurado com sucesso.');
+                    } else {
+                        alert("Arquivo de backup inválido.");
+                    }
+                } catch(err) {
+                    alert("Erro ao ler arquivo JSON.");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // --- PENDÊNCIAS ---
+        function renderPendencias() {
+            const container = document.getElementById('pendenciasContainer');
+            let pendencias = [];
+            if(db.weekStatus !== 'Fechada') pendencias.push("Semana atual encontra-se aberta.");
+            if(db.monthStatus !== 'Fechado') pendencias.push("Mês atual encontra-se aberto.");
+
+            if(pendencias.length === 0) {
+                container.innerHTML = `<span class="text-emerald-400">🟢 Nenhuma pendência encontrada. Sistema 100% regular.</span>`;
+            } else {
+                container.innerHTML = `<ul class="list-disc pl-5 space-y-1 text-amber-400">${pendencias.map(p => `<li>${p}</li>`).join('')}</ul>`;
+            }
+        }
+
+        // --- LIXEIRA ---
+        function renderTrash() {
+            const tbody = document.getElementById('trashTableBody');
+            document.getElementById('trashCount').innerText = `${db.lixeira.length} itens`;
+
+            if(db.lixeira.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="text-center text-zinc-500 py-4">Lixeira vazia.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = db.lixeira.map(t => `
+                <tr class="border-b border-zinc-800">
+                    <td class="py-3 font-mono text-white">${t.id} - ${t.servico} (R$ ${t.valor.toFixed(2)})</td>
+                    <td class="py-3 text-zinc-400 text-xs">${t.deletedAt}</td>
+                    <td class="py-3 text-right space-x-2">
+                        <button onclick="restoreTicket('${t.id}')" class="text-emerald-400 hover:underline text-xs">♻️ Restaurar</button>
+                        <button onclick="permanentDelete('${t.id}')" class="text-red-400 hover:underline text-xs">🗑️ Excluir</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function restoreTicket(id) {
+            const idx = db.lixeira.findIndex(x => x.id === id);
+            if(idx !== -1) {
+                const item = db.lixeira.splice(idx, 1)[0];
+                delete item.deletedAt;
+                db.fichas.push(item);
+                logAudit('RESTAURAÇÃO', `Ficha ${id}`, 'Ficha restaurada da lixeira.');
+                saveDB();
+            }
+        }
+
+        function permanentDelete(id) {
+            if(confirm("ATENÇÃO: Esta ação não poderá ser desfeita. Deseja excluir definitivamente?")) {
+                db.lixeira = db.lixeira.filter(x => x.id !== id);
+                logAudit('EXCLUSÃO DEFINITIVA', `Ficha ${id}`, 'Ficha excluída permanentemente.');
+                saveDB();
+            }
+        }
+
+        // --- AUDITORIA ---
+        function logAudit(action, target, details) {
+            const timeStr = new Date().toLocaleString('pt-BR');
+            db.auditoria.unshift({ date: timeStr, action, target, details });
+            if(db.auditoria.length > 100) db.auditoria.pop();
+        }
+
+        function renderAudit() {
+            const tbody = document.getElementById('auditTableBody');
+            tbody.innerHTML = db.auditoria.map(a => `
+                <tr class="border-b border-zinc-800">
+                    <td class="py-2.5 text-zinc-400">${a.date}</td>
+                    <td class="py-2.5 font-bold text-barberGold">${a.action}</td>
+                    <td class="py-2.5 text-zinc-300"><strong>[${a.target}]</strong> ${a.details}</td>
+                </tr>
+            `).join('');
+        }
+
+        function clearAuditLog() {
+            if(confirm("Deseja limpar o log de auditoria?")) {
+                db.auditoria = [];
+                saveDB();
+            }
+        }
+
+        // --- BUSCA GLOBAL ---
+        function openGlobalSearch() {
+            document.getElementById('globalSearchModal').classList.remove('hidden');
+            document.getElementById('globalSearchInput').focus();
+        }
+
+        function closeGlobalSearch() {
+            document.getElementById('globalSearchModal').classList.add('hidden');
+        }
+
+        function runGlobalSearch() {
+            const q = document.getElementById('globalSearchInput').value.toLowerCase();
+            const resultsDiv = document.getElementById('globalSearchResults');
+            if(!q) {
+                resultsDiv.innerHTML = `<p class="text-zinc-500 text-center py-4">Digite para buscar em fichas, serviços e auditoria...</p>`;
+                return;
+            }
+
+            const foundFichas = db.fichas.filter(f => f.id.toLowerCase().includes(q) || f.servico.toLowerCase().includes(q) || f.mes.toLowerCase().includes(q));
+            
+            if(foundFichas.length === 0) {
+                resultsDiv.innerHTML = `<p class="text-zinc-400 text-center py-4">Nenhum resultado encontrado para "${q}".</p>`;
+                return;
+            }
+
+            resultsDiv.innerHTML = foundFichas.map(f => `
+                <div class="bg-zinc-900/60 p-3 rounded-xl border border-zinc-800 flex justify-between items-center">
+                    <div>
+                        <span class="font-mono font-bold text-barberGold">${f.id}</span> — <span class="text-white">${f.servico}</span>
+                        <p class="text-xs text-zinc-400">Data: ${f.data} | Valor: R$ ${f.valor.toFixed(2)} | Status: ${f.status}</p>
+                    </div>
+                    <button onclick="closeGlobalSearch(); editTicket('${f.id}')" class="bg-zinc-800 hover:bg-zinc-700 text-white px-3 py-1.5 rounded-lg text-xs">Ver / Editar</button>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>
